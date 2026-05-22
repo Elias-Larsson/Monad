@@ -2,12 +2,12 @@ package main
 
 import (
 	"log"
+	routes "monad/internal/api"
 	"os"
 
 	"github.com/gofiber/fiber/v3"
 	"github.com/gofiber/fiber/v3/middleware/cors"
 	"github.com/gofiber/fiber/v3/middleware/logger"
-	routes "monad/internal"
 )
 
 func main() {
