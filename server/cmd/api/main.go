@@ -1,9 +1,12 @@
 package main
 
 import (
+	"context"
 	"log"
-	routes "monad/internal/api"
 	"os"
+
+	routes "monad/internal/api"
+	"monad/internal/workflow"
 
 	"github.com/gofiber/fiber/v3"
 	"github.com/gofiber/fiber/v3/middleware/cors"
@@ -12,11 +15,14 @@ import (
 
 func main() {
 	app := fiber.New()
-
 	app.Use(cors.New())
 	app.Use(logger.New())
-	routes.Setup(app)
-
+	pool, err := workflow.NewPostgres(context.Background())
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer pool.Close()
+	routes.Setup(app, pool)
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "3000"
