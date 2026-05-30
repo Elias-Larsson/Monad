@@ -54,7 +54,8 @@ func WorkflowRun(c fiber.Ctx, pool *pgxpool.Pool) error {
 
 	body, _ := json.Marshal(msg)
 
-	if err := queue.Publish(body); err != nil {
+	err := queue.Publish(body)
+	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).
 			SendString(err.Error())
 	}
