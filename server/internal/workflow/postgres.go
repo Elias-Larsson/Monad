@@ -27,3 +27,45 @@ func NewPostgres(ctx context.Context) (*pgxpool.Pool, error) {
 	}
 	return pool, nil
 }
+
+func EnsureSchema(ctx context.Context, pool *pgxpool.Pool) error {
+	statements := []string{
+		`
+		CREATE TABLE IF NOT EXISTS workflows (
+			id TEXT PRIMARY KEY,
+			name TEXT NOT NULL,
+			created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+		)
+		`,
+		`
+		CREATE TABLE IF NOT EXISTS workflow_runs (
+			id TEXT PRIMARY KEY,
+			workflow_id TEXT NOT NULL,
+			status TEXT NOT NULL,
+			created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+			completed_at TIMESTAMPTZ
+		)
+		`,
+		`
+		CREATE TABLE IF NOT EXISTS tasks (
+			id TEXT PRIMARY KEY,
+			workflow_run_id TEXT NOT NULL,
+			task_type TEXT NOT NULL,
+			status TEXT NOT NULL,
+			payload JSONB,
+			output JSONB,
+			retry_count INTEGER NOT NULL DEFAULT 0,
+			created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+			completed_at TIMESTAMPTZ
+		)
+		`,
+	}
+
+	for _, statement := range statements {
+		if _, err := pool.Exec(ctx, statement); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}

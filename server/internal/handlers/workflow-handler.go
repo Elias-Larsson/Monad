@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 
 	"monad/internal/queue"
-	"monad/internal/workflow"
 
 	"github.com/gofiber/fiber/v3"
 	"github.com/google/uuid"
@@ -13,12 +12,20 @@ import (
 )
 
 func WorkflowRun(c fiber.Ctx, pool *pgxpool.Pool) error {
-	var r workflow.WorkflowRun
+	var r struct {
+		WorkflowID string          `json:"workflow_id"`
+		Input      json.RawMessage `json:"input,omitempty"`
+	}
 
 	// Parse request
 	if err := json.Unmarshal(c.Body(), &r); err != nil {
 		return c.Status(fiber.StatusBadRequest).
 			SendString(err.Error())
+	}
+
+	if r.WorkflowID == "" {
+		return c.Status(fiber.StatusBadRequest).
+			SendString("workflow_id is required")
 	}
 
 	// Generate IDs
@@ -51,10 +58,17 @@ func WorkflowRun(c fiber.Ctx, pool *pgxpool.Pool) error {
 		"workflow_id":     r.WorkflowID,
 		"status":          "PENDING",
 	}
+	if len(r.Input) > 0 {
+		msg["input"] = json.RawMessage(r.Input)
+	}
 
-	body, _ := json.Marshal(msg)
+	body, err := json.Marshal(msg)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).
+			SendString(err.Error())
+	}
 
-	err := queue.Publish(body)
+	err = queue.Publish(body)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).
 			SendString(err.Error())

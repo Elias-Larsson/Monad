@@ -22,6 +22,9 @@ func main() {
 		log.Fatal(err)
 	}
 	defer pool.Close()
+	if err := workflow.EnsureSchema(context.Background(), pool); err != nil {
+		log.Fatal(err)
+	}
 	routes.Setup(app, pool)
 	port := os.Getenv("PORT")
 	if port == "" {

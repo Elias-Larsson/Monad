@@ -20,11 +20,7 @@ func Setup(app *fiber.App, pool *pgxpool.Pool) {
 		return c.SendStatus(fiber.StatusOK)
 	})
 
-	app.Post("/workflow/run", func(c fiber.Ctx, pool *pgxpool.Pool) error {
-		err := handlers.WorkflowRun(c, pool)
-		if err != nil {
-			return c.SendStatus(fiber.StatusInternalServerError)
-		}
-		return c.SendStatus(fiber.StatusOK)
+	app.Post("/workflow/run", func(c fiber.Ctx) error {
+		return handlers.WorkflowRun(c, pool)
 	})
 }
