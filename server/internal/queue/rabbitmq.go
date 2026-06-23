@@ -4,7 +4,7 @@ import "os"
 
 const (
 	defaultRabbitMQURL = "amqp://guest:guest@localhost:5672/"
-	defaultQueueName   = "workflow_runs"
+	defaultQueueName   = "tasks"
 )
 
 func rabbitMQURL() string {

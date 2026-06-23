@@ -14,7 +14,8 @@ import (
 func WorkflowRun(c fiber.Ctx, pool *pgxpool.Pool) error {
 	var r struct {
 		WorkflowID string          `json:"workflow_id"`
-		Input      json.RawMessage `json:"input,omitempty"`
+		TaskType   string          `json:"task_type"`
+		Payload    json.RawMessage `json:"payload,omitempty"`
 	}
 
 	// Parse request
@@ -27,9 +28,14 @@ func WorkflowRun(c fiber.Ctx, pool *pgxpool.Pool) error {
 		return c.Status(fiber.StatusBadRequest).
 			SendString("workflow_id is required")
 	}
+	if r.TaskType == "" {
+		return c.Status(fiber.StatusBadRequest).
+			SendString("task_type is required")
+	}
 
 	// Generate IDs
 	runID := uuid.New().String()
+	taskID := uuid.New().String()
 
 	// Insert workflow run
 	_, err := pool.Exec(
@@ -52,14 +58,42 @@ func WorkflowRun(c fiber.Ctx, pool *pgxpool.Pool) error {
 			SendString(err.Error())
 	}
 
-	// Publish message to RabbitMQ
-	msg := map[string]any{
-		"workflow_run_id": runID,
-		"workflow_id":     r.WorkflowID,
-		"status":          "PENDING",
+	var dbPayload any
+	if len(r.Payload) > 0 {
+		dbPayload = string(r.Payload)
 	}
-	if len(r.Input) > 0 {
-		msg["input"] = json.RawMessage(r.Input)
+
+	// Insert task
+	_, err = pool.Exec(
+		context.Background(),
+		`
+		INSERT INTO tasks (
+			id,
+			workflow_run_id,
+			task_type,
+			status,
+			payload
+		)
+		VALUES ($1, $2, $3, $4, $5)
+		`,
+		taskID,
+		runID,
+		r.TaskType,
+		"PENDING",
+		dbPayload,
+	)
+
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).
+			SendString(err.Error())
+	}
+
+	// Publish task message to RabbitMQ
+	msg := map[string]any{
+		"task_id":         taskID,
+		"workflow_run_id": runID,
+		"task_type":       r.TaskType,
+		"payload":         r.Payload,
 	}
 
 	body, err := json.Marshal(msg)
@@ -76,6 +110,7 @@ func WorkflowRun(c fiber.Ctx, pool *pgxpool.Pool) error {
 
 	return c.JSON(fiber.Map{
 		"workflow_run_id": runID,
-		"status":          "started",
+		"task_id":         taskID,
+		"status":          "PENDING",
 	})
 }
