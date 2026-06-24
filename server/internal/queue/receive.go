@@ -1,12 +1,8 @@
 package queue
 
-import (
-	"log"
+import amqp "github.com/rabbitmq/amqp091-go"
 
-	amqp "github.com/rabbitmq/amqp091-go"
-)
-
-func Receive() error {
+func Receive(handle func([]byte) error) error {
 	conn, err := amqp.Dial(rabbitMQURL())
 	if err != nil {
 		return err
@@ -34,7 +30,7 @@ func Receive() error {
 	msgs, err := ch.Consume(
 		q.Name, // queue
 		"",     // consumer
-		true,   // auto-ack OOPS! should be false in deployment
+		false,  // auto-ack
 		false,  // exclusive
 		false,  // no-local
 		false,  // no-wait
@@ -43,16 +39,16 @@ func Receive() error {
 	if err != nil {
 		return err
 	}
-	var forever chan struct{}
 
-	go func() {
-		for d := range msgs {
-			log.Printf("Received a message: %s", d.Body)
+	for d := range msgs {
+		err := handle(d.Body)
+		if err != nil {
+			d.Nack(false, true)
+			continue
 		}
-	}()
 
-	log.Printf(" [*] Waiting for messages. To exit press CTRL+C")
-	<-forever
+		d.Ack(false)
+	}
 
-	return err
+	return nil
 }

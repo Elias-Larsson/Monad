@@ -1,5 +1,7 @@
 package workflow
 
+import "encoding/json"
+
 type Workflow struct {
 	ID   string
 	Name string
@@ -17,4 +19,11 @@ type Task struct {
 	TaskType      string
 	Status        string
 	Payload       []byte
+}
+
+type TaskMessage struct {
+	TaskID        string          `json:"task_id"`
+	WorkflowRunID string          `json:"workflow_run_id"`
+	TaskType      string          `json:"task_type"`
+	Payload       json.RawMessage `json:"payload"`
 }
