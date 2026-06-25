@@ -23,4 +23,8 @@ func Setup(app *fiber.App, pool *pgxpool.Pool) {
 	app.Post("/workflow/run", func(c fiber.Ctx) error {
 		return handlers.WorkflowRun(c, pool)
 	})
+
+	app.Get("/tasks/:id", func(c fiber.Ctx) error {
+		return handlers.GetTask(c, pool)
+	})
 }
