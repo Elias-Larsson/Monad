@@ -27,4 +27,8 @@ func Setup(app *fiber.App, pool *pgxpool.Pool) {
 	app.Get("/tasks/:id", func(c fiber.Ctx) error {
 		return handlers.GetTask(c, pool)
 	})
+
+	app.Get("/tasks", func(c fiber.Ctx) error {
+		return handlers.GetTasks(c, pool)
+	})
 }
