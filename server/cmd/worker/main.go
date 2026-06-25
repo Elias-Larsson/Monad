@@ -25,6 +25,18 @@ func main() {
 
 		log.Printf("received task: %+v", msg)
 
+		if _, err := pool.Exec(
+			context.Background(),
+			`
+			UPDATE tasks
+			SET status = 'RUNNING'
+			WHERE id = $1
+			`,
+			msg.TaskID,
+		); err != nil {
+			return err
+		}
+
 		_, err := pool.Exec(
 			context.Background(),
 			`
