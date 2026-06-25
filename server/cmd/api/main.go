@@ -28,7 +28,7 @@ func main() {
 	routes.Setup(app, pool)
 	port := os.Getenv("PORT")
 	if port == "" {
-		port = "3000"
+		port = "3010"
 	}
 
 	log.Fatal(app.Listen(":" + port))
