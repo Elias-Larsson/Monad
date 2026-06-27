@@ -7,6 +7,7 @@ import (
 
 	"monad/internal/queue"
 	"monad/internal/workflow"
+	"monad/models"
 )
 
 func main() {
@@ -17,7 +18,7 @@ func main() {
 	defer pool.Close()
 
 	err = queue.Receive(func(body []byte) error {
-		var msg workflow.TaskMessage
+		var msg models.TaskMessage
 
 		if err := json.Unmarshal(body, &msg); err != nil {
 			return err

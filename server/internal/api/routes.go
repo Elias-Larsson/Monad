@@ -20,8 +20,16 @@ func Setup(app *fiber.App, pool *pgxpool.Pool) {
 		return c.SendStatus(fiber.StatusOK)
 	})
 
-	app.Post("/workflow/run", func(c fiber.Ctx) error {
+	app.Post("/workflows/run", func(c fiber.Ctx) error {
 		return handlers.WorkflowRun(c, pool)
+	})
+
+	app.Post("/workflows", func(c fiber.Ctx) error {
+		return handlers.WorkflowCreate(c, pool)
+	})
+
+	app.Delete("/workflows/:id", func(c fiber.Ctx) error {
+		return handlers.WorkflowDelete(c, pool)
 	})
 
 	app.Get("/tasks/:id", func(c fiber.Ctx) error {

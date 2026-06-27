@@ -1,10 +1,10 @@
-package workflow
+package models
 
 import "encoding/json"
 
 type Workflow struct {
-	ID   string
-	Name string
+	ID   string `json:"id"`
+	Name string `json:"name"`
 }
 
 type WorkflowRun struct {
