@@ -24,11 +24,11 @@ func Setup(app *fiber.App, pool *pgxpool.Pool) {
 		return handlers.WorkflowRun(c, pool)
 	})
 
-	app.Get("/workflow-runs", func(c fiber.Ctx) error {
+	app.Get("/workflows/run", func(c fiber.Ctx) error {
 		return handlers.GetWorkflowRuns(c, pool)
 	})
 
-	app.Get("/workflow-runs/:id", func(c fiber.Ctx) error {
+	app.Get("/workflows/run/:id", func(c fiber.Ctx) error {
 		return handlers.GetWorkflowRun(c, pool)
 	})
 
