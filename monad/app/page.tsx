@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import { NavBar } from "@/components/navigation/navbar";
 import { Logo } from "@/components/logo";
+import { Button } from "@/components/button/button";
 
 const stats = [
   { label: "Workflow blueprints", value: "0" },
@@ -14,26 +15,18 @@ export default function Home() {
     <main className="min-h-screen bg-neutral-50 text-neutral-950">
       <NavBar />
       <section className="mx-auto max-w-6xl px-6 py-10">
-      <Logo/>
+        <Logo />
         <div className="grid gap-8 lg:grid-cols-[1fr_320px]">
           <div>
-            <h1 className="mt-3 max-w-3xl text-4xl font-semibold tracking-normal text-neutral-950">
+            <h2 className="mt-3 max-w-3xl text-5xl font-semibold tracking-normal text-neutral-950">
               Monad runs backend workflows through Go, Postgres, RabbitMQ, and
               workers.
-            </h1>
-            <p className="mt-4 max-w-2xl text-base leading-7 text-neutral-600">
+            </h2>
+            <p className="mt-4 max-w-2xl leading-7 text-neutral-600">
               Create workflow blueprints, start runs, queue tasks, and inspect
               worker progress from one small operational dashboard.
             </p>
-
-            <div className="mt-6 flex flex-wrap gap-3">
-              <Link
-                href="/dashboard"
-                className="rounded-md bg-neutral-950 px-4 py-2 text-sm font-medium text-white hover:bg-neutral-800"
-              >
-                Open dashboard
-              </Link>
-            </div>
+            <Button name={"Open Dashboard"} />
           </div>
         </div>
 
@@ -55,17 +48,21 @@ export default function Home() {
             <h2 className="text-xl font-semibold">Current backend pieces</h2>
           </div>
 
-          <div className="grid gap-4 pt-5 md:grid-cols-4">
-            {["Fiber API", "PostgreSQL", "RabbitMQ", "Go worker"].map(
-              (item) => (
-                <div
-                  key={item}
-                  className="rounded-md border border-neutral-200 p-4 text-sm font-medium text-neutral-700"
-                >
-                  {item}
-                </div>
-              ),
-            )}
+          <div className="grid gap-4 pt-5 md:grid-cols-5">
+            {[
+              "Fiber API",
+              "PostgreSQL",
+              "RabbitMQ",
+              "Go worker",
+              "Auth Server",
+            ].map((item) => (
+              <div
+                key={item}
+                className="rounded-md border border-neutral-200 p-4 text-sm font-medium text-neutral-700"
+              >
+                {item}
+              </div>
+            ))}
           </div>
         </section>
       </section>

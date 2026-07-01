@@ -167,3 +167,25 @@
         transform: translate(-50%, -50%) scale(1);
     }
 }
+
+@media (max-width: 900px) {
+    .monadLogo {
+        font-size: 8em;
+    }
+}
+
+@media (max-width: 640px) {
+    .monadLogo {
+        font-size: 7em;
+    }
+}
+
+@media (max-width: 420px) {
+    .monadLogo {
+        font-size: 6em;
+    }
+}
+
+@media {
+    
+}
