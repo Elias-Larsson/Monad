@@ -2,25 +2,12 @@ package handlers
 
 import (
 	"context"
-	"encoding/json"
-	"time"
+	"monad/models"
 
 	"github.com/gofiber/fiber/v3"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
-
-type taskResponse struct {
-	ID            string          `json:"id"`
-	WorkflowRunID string          `json:"workflow_run_id"`
-	TaskType      string          `json:"task_type"`
-	Status        string          `json:"status"`
-	Payload       json.RawMessage `json:"payload"`
-	Output        json.RawMessage `json:"output"`
-	RetryCount    int             `json:"retry_count"`
-	CreatedAt     time.Time       `json:"created_at"`
-	CompletedAt   *time.Time      `json:"completed_at"`
-}
 
 func GetTask(c fiber.Ctx, pool *pgxpool.Pool) error {
 	id := c.Params("id")
@@ -29,7 +16,7 @@ func GetTask(c fiber.Ctx, pool *pgxpool.Pool) error {
 		return c.Status(fiber.StatusBadRequest).SendString("task id is required")
 	}
 
-	var task taskResponse
+	var task models.TaskResponse
 	err := pool.QueryRow(
 		context.Background(),
 		`
@@ -92,9 +79,9 @@ func GetTasks(c fiber.Ctx, pool *pgxpool.Pool) error {
 	}
 	defer rows.Close()
 
-	tasks := []taskResponse{}
+	tasks := []models.TaskResponse{}
 	for rows.Next() {
-		var task taskResponse
+		var task models.TaskResponse
 		if err := rows.Scan(
 			&task.ID,
 			&task.WorkflowRunID,

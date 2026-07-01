@@ -28,6 +28,14 @@ func Setup(app *fiber.App, pool *pgxpool.Pool) {
 		return handlers.WorkflowCreate(c, pool)
 	})
 
+	app.Get("/workflows", func(c fiber.Ctx) error {
+		return handlers.GetWorkflows(c, pool)
+	})
+	
+	app.Get("/workflows/:id", func(c fiber.Ctx) error {
+		return handlers.GetWorkflow(c, pool)
+	})
+
 	app.Delete("/workflows/:id", func(c fiber.Ctx) error {
 		return handlers.WorkflowDelete(c, pool)
 	})
