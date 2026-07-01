@@ -1,7 +1,10 @@
 import Link from "next/link";
 
 export const NavBar = () => {
-  const navItems = ["Workflows", "Account"];
+  const navItems = [
+    { label: "Dashboard", href: "/dashboard" },
+    { label: "Account", href: "/login" },
+  ];
 
   return (
     <header className="border-b border-neutral-200 bg-white">
@@ -11,13 +14,13 @@ export const NavBar = () => {
         </Link>
         <nav aria-label="Primary navigation" className="hidden gap-1 sm:flex">
           {navItems.map((item) => (
-            <a
-              key={item}
-              href="#"
+            <Link
+              key={item.label}
+              href={item.href}
               className="rounded-md px-3 py-2 text-sm font-medium text-neutral-600 hover:bg-neutral-100 hover:text-neutral-950"
             >
-              {item}
-            </a>
+              {item.label}
+            </Link>
           ))}
         </nav>
       </div>
