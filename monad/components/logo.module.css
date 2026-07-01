@@ -20,9 +20,24 @@
 }
 
 .o {
+    position: relative;
     display: inline-block;
     transform-origin: bottom center;
     animation: o-bounce 2.5s forwards;
+}
+
+.eye {
+    position: absolute;
+    left: 50%;
+    top: 54%;
+    width: 0.12em;
+    aspect-ratio: 1;
+    border-radius: 999px;
+    background: currentColor;
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.65);
+    animation: eye-look 5s ease-in-out 2.5s infinite;
+    pointer-events: none;
 }
 
 .tailWrap {
@@ -112,5 +127,43 @@
 
     to {
         width: 1.7em;
+    }
+}
+
+@keyframes eye-look {
+    0% {
+        width: 0;
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
+    }
+
+    18% {
+        width: 0.12em;
+        opacity: 1;
+        transform: translate(calc(-50% - 0.045em), calc(-50% - 0.015em))
+            scale(1);
+    }
+
+    36% {
+        opacity: 1;
+        transform: translate(calc(-50% + 0.045em), calc(-50% - 0.01em)) scale(1);
+    }
+
+    54% {
+        opacity: 1;
+        transform: translate(calc(-50% + 0.015em), calc(-50% + 0.035em))
+            scale(1);
+    }
+
+    72% {
+        width: 0.12em;
+        opacity: 1;
+        transform: translate(calc(-50% - 0.025em), calc(-50% + 0.02em)) scale(1);
+    }
+
+    100% {
+        width: 0em;
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
     }
 }
