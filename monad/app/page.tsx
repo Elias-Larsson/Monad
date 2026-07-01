@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { NavBar } from "@/components/navigation/navbar";
+import { Logo } from "@/components/logo";
 
 const stats = [
   { label: "Workflow blueprints", value: "0" },
@@ -12,13 +13,10 @@ export default function Home() {
   return (
     <main className="min-h-screen bg-neutral-50 text-neutral-950">
       <NavBar />
-
       <section className="mx-auto max-w-6xl px-6 py-10">
+      <Logo/>
         <div className="grid gap-8 lg:grid-cols-[1fr_320px]">
           <div>
-            <p className="text-sm font-medium text-neutral-500">
-              Workflow orchestration
-            </p>
             <h1 className="mt-3 max-w-3xl text-4xl font-semibold tracking-normal text-neutral-950">
               Monad runs backend workflows through Go, Postgres, RabbitMQ, and
               workers.

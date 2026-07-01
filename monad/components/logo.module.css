@@ -1,0 +1,105 @@
+.monadLogo {
+  position: relative;
+  display: inline-flex;
+  align-items: baseline;
+  font-family: var(--font-heading), sans-serif;
+  font-size: 96px;
+  line-height: 1;
+}
+
+.m {
+  position: relative;
+  z-index: 1;
+}
+
+.oTrack {
+  position: absolute;
+  left: 0.76em;
+  z-index: 2;
+  animation: o-slide 2.5s linear forwards;
+}
+
+.o {
+  display: inline-block;
+  transform-origin: bottom center;
+  animation: o-bounce 2.5s forwards;
+}
+
+.tail {
+  margin-left: 0.56em;
+  opacity: 0;
+  animation: reveal-tail 0.3s ease-in forwards;
+  animation-delay: 1.65s;
+}
+
+@keyframes o-slide {
+  0% {
+    transform: translateX(-0.9em);
+  }
+
+  14% {
+    transform: translateX(-0.9em);
+  }
+
+  28% {
+    transform: translateX(-0.65em);
+  }
+
+  42% {
+    transform: translateX(-0.4em);
+  }
+
+  58% {
+    transform: translateX(-0.1em);
+  }
+
+  72% {
+    transform: translateX(0em);
+  }
+
+  100% {
+    transform: translateX(0);
+  }
+}
+
+@keyframes o-bounce {
+  0% {
+    transform: translateY(-2em) scale(1);
+    animation-timing-function: cubic-bezier(.55, 0, 1, .45);
+  }
+
+  14% {
+    transform: translateY(-0.72em) scale(1.18, 0.82);
+    animation-timing-function: cubic-bezier(0, .55, .45, 1);
+  }
+
+  28% {
+    transform: translateY(-1.2em) scale(0.92, 1.08);
+    animation-timing-function: cubic-bezier(.55, 0, 1, .45);
+  }
+
+  42% {
+    transform: translateY(-0.72em) scale(1.18, 0.82);
+    animation-timing-function: cubic-bezier(0, .55, .45, 1);
+  }
+
+  58% {
+    transform: translateY(-1em) scale(0.92, 1.08);
+    animation-timing-function: cubic-bezier(.55, 0, .2, 1);
+  }
+
+  72% {
+    transform: translateY(0em) scale(1.18, 0.82);
+    animation-timing-function: cubic-bezier(.2, 0, .2, 1);
+  }
+
+  100% {
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes reveal-tail {
+  to {
+    opacity: 1;
+  }
+}
