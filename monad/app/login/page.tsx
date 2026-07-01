@@ -1,6 +1,4 @@
 import Link from "next/link";
-import { LoginAccess } from "./login-access";
-import { LoginAnimation } from "./login-animation";
 
 export default function LoginPage() {
   return (
