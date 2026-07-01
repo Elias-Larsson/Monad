@@ -20,6 +20,14 @@ type WorkflowRun struct {
 	Status     string
 }
 
+type WorkflowRunResponse struct {
+	ID          string     `json:"id"`
+	WorkflowID  string     `json:"workflow_id"`
+	Status      string     `json:"status"`
+	CreatedAt   time.Time  `json:"created_at"`
+	CompletedAt *time.Time `json:"completed_at"`
+}
+
 type Task struct {
 	ID            string
 	WorkflowRunID string

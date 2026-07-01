@@ -4,9 +4,11 @@ import (
 	"context"
 	"encoding/json"
 	"monad/internal/queue"
+	"monad/models"
 
 	"github.com/gofiber/fiber/v3"
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -128,4 +130,84 @@ func WorkflowRun(c fiber.Ctx, pool *pgxpool.Pool) error {
 		"task_id":         taskID,
 		"status":          "PENDING",
 	})
+}
+
+func GetWorkflowRuns(c fiber.Ctx, pool *pgxpool.Pool) error {
+	rows, err := pool.Query(
+		context.Background(),
+		`
+		SELECT
+			id,
+			workflow_id,
+			status,
+			created_at,
+			completed_at
+		FROM workflow_runs
+		ORDER BY created_at DESC
+		`,
+	)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).SendString(err.Error())
+	}
+	defer rows.Close()
+
+	runs := []models.WorkflowRunResponse{}
+	for rows.Next() {
+		var run models.WorkflowRunResponse
+		if err := rows.Scan(
+			&run.ID,
+			&run.WorkflowID,
+			&run.Status,
+			&run.CreatedAt,
+			&run.CompletedAt,
+		); err != nil {
+			return c.Status(fiber.StatusInternalServerError).SendString(err.Error())
+		}
+
+		runs = append(runs, run)
+	}
+
+	if err := rows.Err(); err != nil {
+		return c.Status(fiber.StatusInternalServerError).SendString(err.Error())
+	}
+
+	return c.JSON(runs)
+}
+
+func GetWorkflowRun(c fiber.Ctx, pool *pgxpool.Pool) error {
+	id := c.Params("id")
+	if id == "" {
+		return c.Status(fiber.StatusBadRequest).SendString("workflow run id is required")
+	}
+
+	var run models.WorkflowRunResponse
+	err := pool.QueryRow(
+		context.Background(),
+		`
+		SELECT
+			id,
+			workflow_id,
+			status,
+			created_at,
+			completed_at
+		FROM workflow_runs
+		WHERE id = $1
+		`,
+		id,
+	).Scan(
+		&run.ID,
+		&run.WorkflowID,
+		&run.Status,
+		&run.CreatedAt,
+		&run.CompletedAt,
+	)
+
+	if err != nil {
+		if err == pgx.ErrNoRows {
+			return c.Status(fiber.StatusNotFound).SendString("workflow run not found")
+		}
+		return c.Status(fiber.StatusInternalServerError).SendString(err.Error())
+	}
+
+	return c.JSON(run)
 }
