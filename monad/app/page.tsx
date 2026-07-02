@@ -56,7 +56,7 @@ export default function Home() {
             </p>
             <Button name={"Open Dashboard"} />
           </div>
-          <div className={styles.duckWrap}>
+          <a href="https://eliaslarsson.dev" className={styles.duckWrap}>
             <Image
               src="/duck.png"
               alt="duck"
@@ -64,7 +64,7 @@ export default function Home() {
               height={144}
               className={styles.duck}
             />
-          </div>
+          </a>
         </div>
 
         <section className="mt-12">
