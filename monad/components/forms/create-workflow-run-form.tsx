@@ -5,16 +5,6 @@ import { FormEvent, useEffect, useState } from "react";
 import { createWorkflowRun } from "@/lib/api";
 import { Workflow } from "@/types/workflow";
 
-const taskTypes = ["print-message", "wait", "http-request", "json-transform"];
-
-const defaultPayload = JSON.stringify(
-  {
-    message: "hello from Monad",
-  },
-  null,
-  2,
-);
-
 type CreateWorkflowRunFormProps = {
   workflows: Workflow[];
   loading: boolean;
@@ -30,8 +20,6 @@ export function CreateWorkflowRunForm({
   const [formError, setFormError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
   const [workflowID, setWorkflowID] = useState("");
-  const [taskType, setTaskType] = useState("print-message");
-  const [payload, setPayload] = useState(defaultPayload);
 
   useEffect(() => {
     setWorkflowID((current) => current || workflows[0]?.id || "");
@@ -47,20 +35,10 @@ export function CreateWorkflowRunForm({
       return;
     }
 
-    let parsedPayload: Record<string, unknown>;
-    try {
-      parsedPayload = JSON.parse(payload);
-    } catch {
-      setFormError("Payload must be valid JSON.");
-      return;
-    }
-
     try {
       setCreating(true);
       const run = await createWorkflowRun({
         workflow_id: workflowID,
-        task_type: taskType,
-        payload: parsedPayload,
       });
       setSuccessMessage(`Started run ${run.workflow_run_id}`);
       await onCreated();
@@ -79,7 +57,7 @@ export function CreateWorkflowRunForm({
       <div className="flex flex-col gap-1">
         <h2 className="text-lg font-semibold">Start execution</h2>
         <p className="text-sm text-neutral-500">
-          Create a workflow run and queue its first task.
+          Create a workflow run from the saved workflow steps.
         </p>
       </div>
 
@@ -101,33 +79,6 @@ export function CreateWorkflowRunForm({
             ))
           )}
         </select>
-      </label>
-
-      <label className="mt-4 flex flex-col gap-2">
-        <span className="text-sm font-medium text-neutral-700">Task type</span>
-        <select
-          value={taskType}
-          onChange={(event) => setTaskType(event.target.value)}
-          className="h-10 rounded-md border border-neutral-300 bg-white px-3 text-sm outline-none focus:border-neutral-950"
-        >
-          {taskTypes.map((type) => (
-            <option key={type} value={type}>
-              {type}
-            </option>
-          ))}
-        </select>
-      </label>
-
-      <label className="mt-4 flex flex-col gap-2">
-        <span className="text-sm font-medium text-neutral-700">
-          Payload JSON
-        </span>
-        <textarea
-          value={payload}
-          onChange={(event) => setPayload(event.target.value)}
-          rows={8}
-          className="rounded-md border border-neutral-300 bg-white px-3 py-2 font-mono text-sm outline-none focus:border-neutral-950"
-        />
       </label>
 
       {formError ? (

@@ -1,6 +1,8 @@
 export type Task = {
   id: string;
   workflow_run_id: string;
+  workflow_step_id: string;
+  step_order: number;
   task_type: string;
   status: "PENDING" | "RUNNING" | "COMPLETED" | "FAILED";
   payload: Record<string, unknown>;

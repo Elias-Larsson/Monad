@@ -1,6 +1,10 @@
 import { Task } from "@/types/task";
 import { CreateWorkflowRequest, Workflow } from "@/types/workflow";
-import { CreateWorkflowRunRequest, CreateWorkflowRunResponse, WorkflowRun } from "@/types/workflow-run";
+import {
+  CreateWorkflowRunRequest,
+  CreateWorkflowRunResponse,
+  WorkflowRun,
+} from "@/types/workflow-run";
 import axios from "axios";
 
 export const api = axios.create({
@@ -23,8 +27,8 @@ export async function getWorkflow(id: string): Promise<Workflow> {
 
 export async function createWorkflow(
   body: CreateWorkflowRequest,
-): Promise<CreateWorkflowRequest> {
-  const response = await api.post<CreateWorkflowRequest>(`/workflows`, body);
+): Promise<Workflow> {
+  const response = await api.post<Workflow>(`/workflows`, body);
   return response.data;
 }
 
