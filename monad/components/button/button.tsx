@@ -7,7 +7,10 @@ export const Button = ({ name }: Props) => {
     <div className="mt-6 flex flex-wrap gap-3">
       <Link
         href="/dashboard"
-        className="rounded-md bg-neutral-950 px-4 py-2 font-medium text-white hover:bg-neutral-800"
+        className="
+        rounded-md bg-neutral-950 px-4 py-2 font-medium text-white border-black border-2 transition duration-100
+        hover:bg-white hover:text-black 
+        "
       >
         {name}
       </Link>

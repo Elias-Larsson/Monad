@@ -1,0 +1,14 @@
+.duckWrap {
+    width: 144px;
+}
+
+.duckWrap:hover .duck {
+    transform: translateY(-12px) rotateY(1440deg) rotate(20deg);
+}
+
+.duck {
+    position: relative;
+    transform-origin: center;
+    transform: translateY(0) rotateY(0deg) rotate(15deg);
+    transition: transform 2s ease-in-out;
+}

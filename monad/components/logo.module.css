@@ -3,7 +3,7 @@
     display: inline-flex;
     align-items: baseline;
     font-family: var(--font-heading), sans-serif;
-    font-size: 12em;
+    font-size: 8em;
     line-height: 1;
 }
 
@@ -30,13 +30,15 @@
     position: absolute;
     left: 50%;
     top: 54%;
-    width: 0.12em;
-    aspect-ratio: 1;
+    width: 0;
+    height: 0.12em;
     border-radius: 999px;
     background: currentColor;
     opacity: 0;
     transform: translate(-50%, -50%) scale(0.65);
-    animation: eye-look 5s ease-in-out 2.5s infinite;
+    animation:
+        eye-enter 0.35s ease-out 2.5s forwards,
+        eye-look 5s ease-in-out 2.95s infinite;
     pointer-events: none;
 }
 
@@ -130,15 +132,34 @@
     }
 }
 
-@keyframes eye-look {
+@keyframes eye-enter {
     0% {
         width: 0;
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(0.65);
+    }
+
+    70% {
+        width: 0.14em;
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
+    }
+
+    100% {
+        width: 0.12em;
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
+    }
+}
+
+@keyframes eye-look {
+    0% {
+        width: 0.12em;
         opacity: 1;
         transform: translate(-50%, -50%) scale(1);
     }
 
     18% {
-        width: 0.12em;
         opacity: 1;
         transform: translate(calc(-50% - 0.045em), calc(-50% - 0.015em))
             scale(1);
@@ -156,13 +177,12 @@
     }
 
     72% {
-        width: 0.12em;
         opacity: 1;
         transform: translate(calc(-50% - 0.025em), calc(-50% + 0.02em)) scale(1);
     }
 
     100% {
-        width: 0em;
+        width: 0.12em;
         opacity: 1;
         transform: translate(-50%, -50%) scale(1);
     }
@@ -184,8 +204,4 @@
     .monadLogo {
         font-size: 6em;
     }
-}
-
-@media {
-    
 }

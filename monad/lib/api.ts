@@ -13,3 +13,14 @@ export async function getWorkflows(): Promise<Workflow[]> {
   const response = await api.get<Workflow[]>(`/workflows`);
   return response.data;
 }
+
+export async function getWorkflow(id: string): Promise<Workflow> {
+  const response = await api.get<Workflow>(`/workflows/${id}`);
+  return response.data;
+}
+
+export async function createWorkflow(body: Workflow): Promise<string> {
+  const response = await api.get<string>(`/workflows`, body);
+  return response.data;
+}
+
