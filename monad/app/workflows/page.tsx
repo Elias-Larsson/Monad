@@ -7,13 +7,15 @@ import { EmptyState } from "@/components/empty-state";
 import { NavBar } from "@/components/navigation/navbar";
 import { WorkflowNav } from "@/components/navigation/workflownav";
 import { WorkflowsList } from "@/components/workflows";
-import { getWorkflows } from "@/lib/api";
+import { deleteWorkflow, getWorkflows } from "@/lib/api";
 import { Workflow } from "@/types/workflow";
 
 export default function WorkflowsPage() {
   const [workflows, setWorkflows] = useState<Workflow[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadFailed, setLoadFailed] = useState(false);
+  const [deleteError, setDeleteError] = useState("");
+  const [deletingWorkflowID, setDeletingWorkflowID] = useState("");
 
   async function loadWorkflows() {
     try {
@@ -31,6 +33,29 @@ export default function WorkflowsPage() {
     loadWorkflows();
   }, []);
 
+  async function handleDeleteWorkflow(id: string) {
+    const confirmed = window.confirm(
+      "Delete this workflow and its workflow runs?",
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      setDeleteError("");
+      setDeletingWorkflowID(id);
+      await deleteWorkflow(id);
+      setWorkflows((current) =>
+        current.filter((workflow) => workflow.id !== id),
+      );
+    } catch {
+      setDeleteError("Could not delete workflow.");
+    } finally {
+      setDeletingWorkflowID("");
+    }
+  }
+
   return (
     <main className="min-h-screen bg-neutral-50 text-neutral-950">
       <NavBar />
@@ -47,6 +72,10 @@ export default function WorkflowsPage() {
           </div>
 
           <div className="py-6">
+            {deleteError ? (
+              <p className="mb-4 text-sm text-red-600">{deleteError}</p>
+            ) : null}
+
             {loading ? (
               <EmptyState
                 title="Loading workflows"
@@ -63,7 +92,11 @@ export default function WorkflowsPage() {
                 message="Create your first workflow blueprint below."
               />
             ) : (
-              <WorkflowsList workflows={workflows} />
+              <WorkflowsList
+                workflows={workflows}
+                deletingWorkflowID={deletingWorkflowID}
+                onDelete={handleDeleteWorkflow}
+              />
             )}
           </div>
 
