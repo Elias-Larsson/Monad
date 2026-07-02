@@ -1,8 +1,21 @@
 package queue
 
-import amqp "github.com/rabbitmq/amqp091-go"
+import (
+	"log"
+	"sync"
+
+	amqp "github.com/rabbitmq/amqp091-go"
+)
 
 func Receive(handle func([]byte) error) error {
+	return ReceiveConcurrent(1, handle)
+}
+
+func ReceiveConcurrent(concurrency int, handle func([]byte) error) error {
+	if concurrency < 1 {
+		concurrency = 1
+	}
+
 	conn, err := amqp.Dial(rabbitMQURL())
 	if err != nil {
 		return err
@@ -27,6 +40,10 @@ func Receive(handle func([]byte) error) error {
 		return err
 	}
 
+	if err := ch.Qos(concurrency, 0, false); err != nil {
+		return err
+	}
+
 	msgs, err := ch.Consume(
 		q.Name, // queue
 		"",     // consumer
@@ -40,15 +57,42 @@ func Receive(handle func([]byte) error) error {
 		return err
 	}
 
-	for d := range msgs {
-		err := handle(d.Body)
-		if err != nil {
-			d.Nack(false, true)
-			continue
-		}
+	jobs := make(chan amqp.Delivery, concurrency)
+	var wg sync.WaitGroup
+	var ackMu sync.Mutex
 
-		d.Ack(false)
+	for workerID := 1; workerID <= concurrency; workerID++ {
+		wg.Add(1)
+		go func(workerID int) {
+			defer wg.Done()
+
+			for d := range jobs {
+				if err := handle(d.Body); err != nil {
+					log.Printf("worker %d failed task delivery: %v", workerID, err)
+
+					ackMu.Lock()
+					if nackErr := d.Nack(false, true); nackErr != nil {
+						log.Printf("worker %d failed to nack delivery: %v", workerID, nackErr)
+					}
+					ackMu.Unlock()
+					continue
+				}
+
+				ackMu.Lock()
+				if ackErr := d.Ack(false); ackErr != nil {
+					log.Printf("worker %d failed to ack delivery: %v", workerID, ackErr)
+				}
+				ackMu.Unlock()
+			}
+		}(workerID)
 	}
+
+	for d := range msgs {
+		jobs <- d
+	}
+
+	close(jobs)
+	wg.Wait()
 
 	return nil
 }

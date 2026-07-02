@@ -1,38 +1,18 @@
-package main
+package worker
 
 import (
 	"context"
 	"encoding/json"
 	"log"
-	"os"
-	"strconv"
-
 	"monad/internal/queue"
 	"monad/internal/tasks"
 	"monad/internal/workflow"
 	"monad/models"
+	"os"
+	"strconv"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 )
-
-func main() {
-	pool, err := workflow.NewPostgres(context.Background())
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer pool.Close()
-
-	concurrency := workerConcurrency()
-	log.Printf("worker starting with concurrency=%d", concurrency)
-
-	err = queue.ReceiveConcurrent(concurrency, func(body []byte) error {
-		return handleTask(context.Background(), pool, body)
-	})
-
-	if err != nil {
-		log.Fatal(err)
-	}
-}
 
 func workerConcurrency() int {
 	value := os.Getenv("WORKER_CONCURRENCY")
