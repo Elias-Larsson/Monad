@@ -23,6 +23,8 @@ func GetTask(c fiber.Ctx, pool *pgxpool.Pool) error {
 		SELECT
 			id,
 			workflow_run_id,
+			COALESCE(workflow_step_id, ''),
+			COALESCE(step_order, 0),
 			task_type,
 			status,
 			COALESCE(payload, '{}'::jsonb),
@@ -37,6 +39,8 @@ func GetTask(c fiber.Ctx, pool *pgxpool.Pool) error {
 	).Scan(
 		&task.ID,
 		&task.WorkflowRunID,
+		&task.WorkflowStepID,
+		&task.StepOrder,
 		&task.TaskType,
 		&task.Status,
 		&task.Payload,
@@ -63,6 +67,8 @@ func GetTasks(c fiber.Ctx, pool *pgxpool.Pool) error {
 		SELECT
 			id,
 			workflow_run_id,
+			COALESCE(workflow_step_id, ''),
+			COALESCE(step_order, 0),
 			task_type,
 			status,
 			COALESCE(payload, '{}'::jsonb),
@@ -85,6 +91,8 @@ func GetTasks(c fiber.Ctx, pool *pgxpool.Pool) error {
 		if err := rows.Scan(
 			&task.ID,
 			&task.WorkflowRunID,
+			&task.WorkflowStepID,
+			&task.StepOrder,
 			&task.TaskType,
 			&task.Status,
 			&task.Payload,

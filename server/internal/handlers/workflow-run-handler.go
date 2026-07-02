@@ -14,9 +14,7 @@ import (
 
 func WorkflowRun(c fiber.Ctx, pool *pgxpool.Pool) error {
 	var r struct {
-		WorkflowID string          `json:"workflow_id"`
-		TaskType   string          `json:"task_type"`
-		Payload    json.RawMessage `json:"payload,omitempty"`
+		WorkflowID string `json:"workflow_id"`
 	}
 
 	if err := json.Unmarshal(c.Body(), &r); err != nil {
@@ -28,17 +26,13 @@ func WorkflowRun(c fiber.Ctx, pool *pgxpool.Pool) error {
 		return c.Status(fiber.StatusBadRequest).
 			SendString("workflow_id is required")
 	}
-	if r.TaskType == "" {
-		return c.Status(fiber.StatusBadRequest).
-			SendString("task_type is required")
-	}
 
 	runID := uuid.New().String()
-	taskID := uuid.New().String()
 
+	ctx := context.Background()
 	var workflowExists bool
 	err := pool.QueryRow(
-		context.Background(),
+		ctx,
 		`
 		SELECT EXISTS (
 			SELECT 1
@@ -57,8 +51,67 @@ func WorkflowRun(c fiber.Ctx, pool *pgxpool.Pool) error {
 			SendString("workflow not found")
 	}
 
-	_, err = pool.Exec(
-		context.Background(),
+	rows, err := pool.Query(
+		ctx,
+		`
+		SELECT
+			id,
+			step_order,
+			task_type,
+			COALESCE(payload, '{}'::jsonb)
+		FROM workflow_steps
+		WHERE workflow_id = $1
+		ORDER BY step_order ASC
+		`,
+		r.WorkflowID,
+	)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).
+			SendString(err.Error())
+	}
+	defer rows.Close()
+
+	type workflowStep struct {
+		ID        string
+		StepOrder int
+		TaskType  string
+		Payload   json.RawMessage
+	}
+
+	steps := []workflowStep{}
+	for rows.Next() {
+		var step workflowStep
+		if err := rows.Scan(
+			&step.ID,
+			&step.StepOrder,
+			&step.TaskType,
+			&step.Payload,
+		); err != nil {
+			return c.Status(fiber.StatusInternalServerError).
+				SendString(err.Error())
+		}
+
+		steps = append(steps, step)
+	}
+	if err := rows.Err(); err != nil {
+		return c.Status(fiber.StatusInternalServerError).
+			SendString(err.Error())
+	}
+
+	if len(steps) == 0 {
+		return c.Status(fiber.StatusBadRequest).
+			SendString("workflow has no steps")
+	}
+
+	tx, err := pool.Begin(ctx)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).
+			SendString(err.Error())
+	}
+	defer tx.Rollback(ctx)
+
+	_, err = tx.Exec(
+		ctx,
 		`
 		INSERT INTO workflow_runs (
 			id,
@@ -71,46 +124,62 @@ func WorkflowRun(c fiber.Ctx, pool *pgxpool.Pool) error {
 		r.WorkflowID,
 		"PENDING",
 	)
-
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).
 			SendString(err.Error())
 	}
 
-	var dbPayload any
-	if len(r.Payload) > 0 {
-		dbPayload = string(r.Payload)
-	}
+	taskIDs := make([]string, 0, len(steps))
+	for _, step := range steps {
+		taskID := uuid.New().String()
+		taskIDs = append(taskIDs, taskID)
 
-	_, err = pool.Exec(
-		context.Background(),
-		`
-		INSERT INTO tasks (
-			id,
-			workflow_run_id,
-			task_type,
-			status,
-			payload
+		var dbPayload any
+		if len(step.Payload) > 0 {
+			dbPayload = string(step.Payload)
+		}
+
+		_, err = tx.Exec(
+			ctx,
+			`
+			INSERT INTO tasks (
+				id,
+				workflow_run_id,
+				workflow_step_id,
+				step_order,
+				task_type,
+				status,
+				payload
+			)
+			VALUES ($1, $2, $3, $4, $5, $6, $7)
+			`,
+			taskID,
+			runID,
+			step.ID,
+			step.StepOrder,
+			step.TaskType,
+			"PENDING",
+			dbPayload,
 		)
-		VALUES ($1, $2, $3, $4, $5)
-		`,
-		taskID,
-		runID,
-		r.TaskType,
-		"PENDING",
-		dbPayload,
-	)
+		if err != nil {
+			return c.Status(fiber.StatusInternalServerError).
+				SendString(err.Error())
+		}
+	}
 
-	if err != nil {
+	if err := tx.Commit(ctx); err != nil {
 		return c.Status(fiber.StatusInternalServerError).
 			SendString(err.Error())
 	}
 
-	msg := map[string]any{
-		"task_id":         taskID,
-		"workflow_run_id": runID,
-		"task_type":       r.TaskType,
-		"payload":         r.Payload,
+	firstStep := steps[0]
+	msg := models.TaskMessage{
+		TaskID:         taskIDs[0],
+		WorkflowRunID:  runID,
+		WorkflowStepID: firstStep.ID,
+		StepOrder:      firstStep.StepOrder,
+		TaskType:       firstStep.TaskType,
+		Payload:        firstStep.Payload,
 	}
 
 	body, err := json.Marshal(msg)
@@ -127,7 +196,8 @@ func WorkflowRun(c fiber.Ctx, pool *pgxpool.Pool) error {
 
 	return c.JSON(fiber.Map{
 		"workflow_run_id": runID,
-		"task_id":         taskID,
+		"task_id":         taskIDs[0],
+		"task_ids":        taskIDs,
 		"status":          "PENDING",
 	})
 }

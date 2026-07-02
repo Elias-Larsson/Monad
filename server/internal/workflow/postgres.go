@@ -50,6 +50,8 @@ func EnsureSchema(ctx context.Context, pool *pgxpool.Pool) error {
 		CREATE TABLE IF NOT EXISTS tasks (
 			id TEXT PRIMARY KEY,
 			workflow_run_id TEXT NOT NULL,
+			workflow_step_id TEXT,
+			step_order INTEGER,
 			task_type TEXT NOT NULL,
 			status TEXT NOT NULL,
 			payload JSONB,
@@ -58,6 +60,37 @@ func EnsureSchema(ctx context.Context, pool *pgxpool.Pool) error {
 			created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
 			completed_at TIMESTAMPTZ
 		)
+
+		`,
+		`
+		CREATE TABLE IF NOT EXISTS workflow_steps (
+			id TEXT PRIMARY KEY,
+			workflow_id TEXT NOT NULL,
+			step_order INTEGER NOT NULL,
+			task_type TEXT NOT NULL,
+			payload JSONB,
+			created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+		)
+		`,
+		`
+		ALTER TABLE tasks
+		ADD COLUMN IF NOT EXISTS workflow_step_id TEXT
+		`,
+		`
+		ALTER TABLE tasks
+		ADD COLUMN IF NOT EXISTS step_order INTEGER
+		`,
+		`
+		CREATE UNIQUE INDEX IF NOT EXISTS workflow_steps_workflow_id_step_order_idx
+		ON workflow_steps (workflow_id, step_order)
+		`,
+		`
+		CREATE INDEX IF NOT EXISTS workflow_steps_workflow_id_idx
+		ON workflow_steps (workflow_id)
+		`,
+		`
+		CREATE INDEX IF NOT EXISTS tasks_workflow_run_id_step_order_idx
+		ON tasks (workflow_run_id, step_order)
 		`,
 	}
 
