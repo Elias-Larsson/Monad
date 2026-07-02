@@ -1,5 +1,6 @@
 "use client";
 
+import { EmptyState } from "@/components/empty-state";
 import { NavBar } from "@/components/navigation/navbar";
 import { WorkflowNav } from "@/components/navigation/workflownav";
 import { WorkflowsList } from "@/components/workflows";
@@ -60,25 +61,21 @@ export default function Dashboard() {
           </div>
 
           {loading ? (
-            <div className="rounded-md border border-dashed border-neutral-300 p-8 text-center">
-              <h2 className="text-base font-semibold">Loading workflows</h2>
-              <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-neutral-500">
-                Fetching workflow blueprints from the API.
-              </p>
-            </div>
+            <EmptyState
+              title="Loading workflows"
+              message="Fetching workflow blueprints from the API."
+            />
           ) : loadFailed || workflows.length === 0 ? (
-            <div className="rounded-md border border-dashed border-neutral-300 p-8 text-center">
-              <h2 className="text-base font-semibold">
-                {loadFailed ? "Could not load workflows" : "No workflows yet"}
-              </h2>
-              <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-neutral-500">
-                {loadFailed
+            <EmptyState
+              title={loadFailed ? "Could not load workflows" : "No workflows yet"}
+              message={
+                loadFailed
                   ? "Make sure the Go API is running and NEXT_PUBLIC_API_URL points to it."
-                  : "Create your first workflow blueprint to see it here."}
-              </p>
-            </div>
+                  : "Create your first workflow blueprint to see it here."
+              }
+            />
           ) : (
-           <WorkflowsList workflows={workflows}/>
+            <WorkflowsList workflows={workflows} />
           )}
         </section>
       </div>

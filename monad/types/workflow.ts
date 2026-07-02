@@ -3,3 +3,8 @@ export type Workflow = {
   name: string;
   created_at: string;
 };
+
+export type CreateWorkflowRequest = {
+  id: string;
+  name: string;
+};

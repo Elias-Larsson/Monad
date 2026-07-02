@@ -1,4 +1,6 @@
-import { Workflow } from "@/types/workflow";
+import { Task } from "@/types/task";
+import { CreateWorkflowRequest, Workflow } from "@/types/workflow";
+import { CreateWorkflowRunRequest, CreateWorkflowRunResponse, WorkflowRun } from "@/types/workflow-run";
 import axios from "axios";
 
 export const api = axios.create({
@@ -19,8 +21,48 @@ export async function getWorkflow(id: string): Promise<Workflow> {
   return response.data;
 }
 
-export async function createWorkflow(body: Workflow): Promise<string> {
-  const response = await api.get<string>(`/workflows`, body);
+export async function createWorkflow(
+  body: CreateWorkflowRequest,
+): Promise<CreateWorkflowRequest> {
+  const response = await api.post<CreateWorkflowRequest>(`/workflows`, body);
   return response.data;
 }
 
+export async function deleteWorkflow(id: string): Promise<void> {
+  await api.delete(`/workflows/${id}`);
+}
+
+export async function createWorkflowRun(
+  body: CreateWorkflowRunRequest,
+): Promise<CreateWorkflowRunResponse> {
+  const response = await api.post<CreateWorkflowRunResponse>(
+    `/workflows/run`,
+    body,
+  );
+  return response.data;
+}
+
+export async function getWorkflowRuns(): Promise<WorkflowRun[]> {
+  const response = await api.get<WorkflowRun[]>(`/workflows/run`);
+  return response.data;
+}
+
+export async function getWorkflowRun(id: string): Promise<WorkflowRun> {
+  const response = await api.get<WorkflowRun>(`/workflows/run/${id}`);
+  return response.data;
+}
+
+export async function getTasks(): Promise<Task[]> {
+  const response = await api.get<Task[]>(`/tasks`);
+  return response.data;
+}
+
+export async function getTask(id: string): Promise<Task> {
+  const response = await api.get<Task>(`/tasks/${id}`);
+  return response.data;
+}
+
+export async function healthCheck(): Promise<boolean> {
+  const response = await api.get(`/health`);
+  return response.status === 200;
+}
