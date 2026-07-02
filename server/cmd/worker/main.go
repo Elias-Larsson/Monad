@@ -6,6 +6,7 @@ import (
 	"log"
 
 	"monad/internal/queue"
+	"monad/internal/tasks"
 	"monad/internal/workflow"
 	"monad/models"
 )
@@ -26,56 +27,50 @@ func main() {
 
 		log.Printf("received task: %+v", msg)
 
-		if _, err := pool.Exec(
-			context.Background(),
-			`
-			UPDATE tasks
-			SET status = 'RUNNING'
-			WHERE id = $1
-			`,
-			msg.TaskID,
-		); err != nil {
+		ctx := context.Background()
+		if err := workflow.MarkWorkflowRunRunning(ctx, pool, msg.WorkflowRunID); err != nil {
 			return err
 		}
 
-		if _, err := pool.Exec(
-			context.Background(),
-			`
-			UPDATE workflow_runs
-			SET status = 'RUNNING'
-			WHERE id = $1
-			`,
+		if err := workflow.MarkTaskRunning(ctx, pool, msg.TaskID); err != nil {
+			return err
+		}
+
+		output, err := tasks.Execute(ctx, msg)
+		if err != nil {
+			if markErr := workflow.MarkTaskFailed(ctx, pool, msg.TaskID, err.Error()); markErr != nil {
+				return markErr
+			}
+			if markErr := workflow.MarkWorkflowRunFailed(ctx, pool, msg.WorkflowRunID); markErr != nil {
+				return markErr
+			}
+			return err
+		}
+
+		if err := workflow.MarkTaskCompleted(ctx, pool, msg.TaskID, output); err != nil {
+			return err
+		}
+
+		nextTask, ok, err := workflow.GetNextPendingTask(
+			ctx,
+			pool,
 			msg.WorkflowRunID,
-		); err != nil {
-			return err
-		}
-
-		_, err := pool.Exec(
-			context.Background(),
-			`
-			UPDATE tasks
-			SET status = 'COMPLETED',
-			    completed_at = NOW()
-			WHERE id = $1
-			`,
-			msg.TaskID,
+			msg.StepOrder,
 		)
 		if err != nil {
 			return err
 		}
 
-		_, err = pool.Exec(
-			context.Background(),
-			`
-			UPDATE workflow_runs
-			SET status = 'COMPLETED',
-			    completed_at = NOW()
-			WHERE id = $1
-			`,
-			msg.WorkflowRunID,
-		)
+		if ok {
+			body, err := json.Marshal(nextTask)
+			if err != nil {
+				return err
+			}
 
-		return err
+			return queue.Publish(body)
+		}
+
+		return workflow.MarkWorkflowRunCompleted(ctx, pool, msg.WorkflowRunID)
 	})
 
 	if err != nil {
