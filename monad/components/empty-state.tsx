@@ -3,7 +3,7 @@ type EmptyStateProps = {
   message: string;
 };
 
-export function EmptyState({ title, message }: EmptyStateProps) {
+export const EmptyState = ({ title, message }: EmptyStateProps) => {
   return (
     <div className="rounded-md border border-dashed border-neutral-300 p-8 text-center">
       <h2 className="text-base font-semibold">{title}</h2>

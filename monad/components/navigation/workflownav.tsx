@@ -9,7 +9,7 @@ export const WorkflowNav = () => {
   const navItems = [
     { label: "Overview", href: "/dashboard" },
     { label: "Workflows", href: "/workflows" },
-    { label: "Runs", href: "/runs" },
+    { label: "Runs", href: "/workflows/run" },
   ];
   return (
     <aside className="hidden lg:block">

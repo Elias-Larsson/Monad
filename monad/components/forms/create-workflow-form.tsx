@@ -8,7 +8,7 @@ type CreateWorkflowFormProps = {
   onCreated: () => Promise<void>;
 };
 
-export function CreateWorkflowForm({ onCreated }: CreateWorkflowFormProps) {
+export const CreateWorkflowForm = ({ onCreated }: CreateWorkflowFormProps) => {
   const [creating, setCreating] = useState(false);
   const [createError, setCreateError] = useState("");
   const [workflowID, setWorkflowID] = useState("");

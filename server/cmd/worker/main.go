@@ -38,6 +38,18 @@ func main() {
 			return err
 		}
 
+		if _, err := pool.Exec(
+			context.Background(),
+			`
+			UPDATE workflow_runs
+			SET status = 'RUNNING'
+			WHERE id = $1
+			`,
+			msg.WorkflowRunID,
+		); err != nil {
+			return err
+		}
+
 		_, err := pool.Exec(
 			context.Background(),
 			`
@@ -47,6 +59,20 @@ func main() {
 			WHERE id = $1
 			`,
 			msg.TaskID,
+		)
+		if err != nil {
+			return err
+		}
+
+		_, err = pool.Exec(
+			context.Background(),
+			`
+			UPDATE workflow_runs
+			SET status = 'COMPLETED',
+			    completed_at = NOW()
+			WHERE id = $1
+			`,
+			msg.WorkflowRunID,
 		)
 
 		return err
