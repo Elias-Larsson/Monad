@@ -1,5 +1,8 @@
 .duckWrap {
     width: 144px;
+    opacity: 0;
+    transform: translateX(36px);
+    animation: duck-enter 0.7s ease-out 3s forwards;
 }
 
 .duckWrap:hover .duck {
@@ -11,4 +14,17 @@
     transform-origin: center;
     transform: translateY(0) rotateY(0deg) rotate(15deg);
     transition: transform 2s ease-in-out;
+}
+
+@keyframes duck-enter {
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@media (max-width: 1023px) {
+    .duckWrap {
+        display: none;
+    }
 }

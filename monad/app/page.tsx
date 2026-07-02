@@ -130,15 +130,6 @@ export default function Home() {
             ))}
           </div>
         </section>
-        <div className="flex w-full flex-row justify-center">
-          <Image
-            src="/duck.png"
-            alt="duck"
-            width={156}
-            height={156}
-            className="block lg:hidden p-4"
-          />
-        </div>
       </section>
     </main>
   );
