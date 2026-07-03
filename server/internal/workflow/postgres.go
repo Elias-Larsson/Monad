@@ -31,8 +31,17 @@ func NewPostgres(ctx context.Context) (*pgxpool.Pool, error) {
 func EnsureSchema(ctx context.Context, pool *pgxpool.Pool) error {
 	statements := []string{
 		`
+		CREATE TABLE IF NOT EXISTS users (
+			id TEXT PRIMARY KEY,
+			email TEXT UNIQUE NOT NULL,
+			password_hash TEXT NOT NULL,
+			created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+		)
+		`,
+		`
 		CREATE TABLE IF NOT EXISTS workflows (
 			id TEXT PRIMARY KEY,
+			user_id TEXT NOT NULL,
 			name TEXT NOT NULL,
 			created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 		)
@@ -73,14 +82,6 @@ func EnsureSchema(ctx context.Context, pool *pgxpool.Pool) error {
 		)
 		`,
 		`
-		ALTER TABLE tasks
-		ADD COLUMN IF NOT EXISTS workflow_step_id TEXT
-		`,
-		`
-		ALTER TABLE tasks
-		ADD COLUMN IF NOT EXISTS step_order INTEGER
-		`,
-		`
 		CREATE UNIQUE INDEX IF NOT EXISTS workflow_steps_workflow_id_step_order_idx
 		ON workflow_steps (workflow_id, step_order)
 		`,
@@ -91,6 +92,10 @@ func EnsureSchema(ctx context.Context, pool *pgxpool.Pool) error {
 		`
 		CREATE INDEX IF NOT EXISTS tasks_workflow_run_id_step_order_idx
 		ON tasks (workflow_run_id, step_order)
+		`,
+		`
+		CREATE INDEX IF NOT EXISTS workflows_user_id_idx
+		ON workflows (user_id)
 		`,
 	}
 

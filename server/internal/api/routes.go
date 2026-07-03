@@ -29,4 +29,6 @@ func Setup(app *fiber.App, pool *pgxpool.Pool) {
 	app.Get("/tasks/:id", h.GetTask)
 
 	app.Get("/tasks", h.GetTasks)
+
+	app.Post("/user", h.UserCreate)
 }
