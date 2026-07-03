@@ -7,6 +7,7 @@ import (
 
 type Workflow struct {
 	ID   string `json:"id"`
+	UserId string `json:"user_id"`
 	Name string `json:"name"`
 }
 
@@ -81,4 +82,10 @@ type TaskResponse struct {
 	RetryCount     int             `json:"retry_count"`
 	CreatedAt      time.Time       `json:"created_at"`
 	CompletedAt    *time.Time      `json:"completed_at"`
+}
+
+type User struct {
+	ID string
+	Email string
+	Password string
 }
