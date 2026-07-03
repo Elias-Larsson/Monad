@@ -114,7 +114,7 @@ export function WorkflowRunDetailsModal({
                     >
                       <div className="min-w-0">
                         <p className="font-medium text-neutral-950">
-                          {task.task_type}
+                          Step {task.step_order}: {task.task_type}
                         </p>
                         <p className="mt-1 break-all text-xs text-neutral-500">
                           {task.id}

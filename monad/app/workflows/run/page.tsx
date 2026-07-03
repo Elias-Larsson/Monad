@@ -77,7 +77,9 @@ export default function WorkflowRunPage() {
     try {
       const tasks = await getTasks();
       setSelectedRunTasks(
-        tasks.filter((task) => task.workflow_run_id === runID),
+        tasks
+          .filter((task) => task.workflow_run_id === runID)
+          .sort((a, b) => a.step_order - b.step_order),
       );
     } catch {
       setDetailsFailed(true);
