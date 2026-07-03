@@ -6,10 +6,9 @@ import (
 
 	"github.com/gofiber/fiber/v3"
 	"github.com/jackc/pgx/v5"
-	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-func GetTask(c fiber.Ctx, pool *pgxpool.Pool) error {
+func (h *Handler) GetTask(c fiber.Ctx) error {
 	id := c.Params("id")
 
 	if id == "" {
@@ -17,7 +16,7 @@ func GetTask(c fiber.Ctx, pool *pgxpool.Pool) error {
 	}
 
 	var task models.TaskResponse
-	err := pool.QueryRow(
+	err := h.pool.QueryRow(
 		context.Background(),
 		`
 		SELECT
@@ -60,8 +59,8 @@ func GetTask(c fiber.Ctx, pool *pgxpool.Pool) error {
 	return c.JSON(task)
 }
 
-func GetTasks(c fiber.Ctx, pool *pgxpool.Pool) error {
-	rows, err := pool.Query(
+func (h *Handler) GetTasks(c fiber.Ctx) error {
+	rows, err := h.pool.Query(
 		context.Background(),
 		`
 		SELECT

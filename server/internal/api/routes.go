@@ -1,58 +1,32 @@
 package routes
 
 import (
-	"context"
 	"monad/internal/handlers"
-	"time"
 
 	"github.com/gofiber/fiber/v3"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 func Setup(app *fiber.App, pool *pgxpool.Pool) {
+	h := handlers.New(pool)
 
-	app.Get("/health", func(c fiber.Ctx) error {
-		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
-		defer cancel()
-		if err := pool.Ping(ctx); err != nil {
-			return c.Status(fiber.StatusServiceUnavailable).SendString("db unavailable")
-		}
-		return c.SendStatus(fiber.StatusOK)
-	})
+	app.Get("/health", h.Health)
 
-	app.Post("/workflows/run", func(c fiber.Ctx) error {
-		return handlers.WorkflowRun(c, pool)
-	})
+	app.Post("/workflows/run", h.WorkflowRun)
 
-	app.Get("/workflows/run", func(c fiber.Ctx) error {
-		return handlers.GetWorkflowRuns(c, pool)
-	})
+	app.Get("/workflows/run", h.GetWorkflowRuns)
 
-	app.Get("/workflows/run/:id", func(c fiber.Ctx) error {
-		return handlers.GetWorkflowRun(c, pool)
-	})
+	app.Get("/workflows/run/:id", h.GetWorkflowRun)
 
-	app.Post("/workflows", func(c fiber.Ctx) error {
-		return handlers.WorkflowCreate(c, pool)
-	})
+	app.Post("/workflows", h.WorkflowCreate)
 
-	app.Get("/workflows", func(c fiber.Ctx) error {
-		return handlers.GetWorkflows(c, pool)
-	})
+	app.Get("/workflows", h.GetWorkflows)
 
-	app.Get("/workflows/:id", func(c fiber.Ctx) error {
-		return handlers.GetWorkflow(c, pool)
-	})
+	app.Get("/workflows/:id", h.GetWorkflow)
 
-	app.Delete("/workflows/:id", func(c fiber.Ctx) error {
-		return handlers.WorkflowDelete(c, pool)
-	})
+	app.Delete("/workflows/:id", h.WorkflowDelete)
 
-	app.Get("/tasks/:id", func(c fiber.Ctx) error {
-		return handlers.GetTask(c, pool)
-	})
+	app.Get("/tasks/:id", h.GetTask)
 
-	app.Get("/tasks", func(c fiber.Ctx) error {
-		return handlers.GetTasks(c, pool)
-	})
+	app.Get("/tasks", h.GetTasks)
 }

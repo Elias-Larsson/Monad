@@ -12,7 +12,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-func WorkflowDelete(c fiber.Ctx, pool *pgxpool.Pool) error {
+func (h *Handler) WorkflowDelete(c fiber.Ctx) error {
 	id := c.Params("id")
 
 	if id == "" {
@@ -20,7 +20,7 @@ func WorkflowDelete(c fiber.Ctx, pool *pgxpool.Pool) error {
 	}
 
 	ctx := context.Background()
-	tx, err := pool.Begin(ctx)
+	tx, err := h.pool.Begin(ctx)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).SendString(err.Error())
 	}
@@ -85,7 +85,7 @@ func WorkflowDelete(c fiber.Ctx, pool *pgxpool.Pool) error {
 	return c.SendStatus(fiber.StatusNoContent)
 }
 
-func WorkflowCreate(c fiber.Ctx, pool *pgxpool.Pool) error {
+func (h *Handler) WorkflowCreate(c fiber.Ctx) error {
 	var request models.WorkflowCreateRequest
 	if err := json.Unmarshal(c.Body(), &request); err != nil {
 		return c.Status(fiber.StatusBadRequest).
@@ -103,7 +103,7 @@ func WorkflowCreate(c fiber.Ctx, pool *pgxpool.Pool) error {
 	}
 
 	ctx := context.Background()
-	tx, err := pool.Begin(ctx)
+	tx, err := h.pool.Begin(ctx)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).SendString(err.Error())
 	}
@@ -210,8 +210,8 @@ func WorkflowCreate(c fiber.Ctx, pool *pgxpool.Pool) error {
 	return c.Status(fiber.StatusCreated).JSON(response)
 }
 
-func GetWorkflows(c fiber.Ctx, pool *pgxpool.Pool) error {
-	rows, err := pool.Query(
+func (h *Handler) GetWorkflows(c fiber.Ctx) error {
+	rows, err := h.pool.Query(
 		context.Background(),
 		`
 		SELECT
@@ -248,7 +248,7 @@ func GetWorkflows(c fiber.Ctx, pool *pgxpool.Pool) error {
 	return c.JSON(workflows)
 }
 
-func GetWorkflow(c fiber.Ctx, pool *pgxpool.Pool) error {
+func (h *Handler) GetWorkflow(c fiber.Ctx) error {
 	id := c.Params("id")
 
 	if id == "" {
@@ -256,7 +256,7 @@ func GetWorkflow(c fiber.Ctx, pool *pgxpool.Pool) error {
 	}
 	var workflow models.WorkflowResponse
 
-	err := pool.QueryRow(
+	err := h.pool.QueryRow(
 		context.Background(),
 		`
 		SELECT
@@ -281,7 +281,7 @@ func GetWorkflow(c fiber.Ctx, pool *pgxpool.Pool) error {
 		return c.Status(fiber.StatusInternalServerError).SendString(err.Error())
 	}
 
-	steps, err := getWorkflowSteps(context.Background(), pool, id)
+	steps, err := getWorkflowSteps(context.Background(), h.pool, id)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).SendString(err.Error())
 	}

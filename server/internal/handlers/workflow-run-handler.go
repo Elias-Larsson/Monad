@@ -9,10 +9,9 @@ import (
 	"github.com/gofiber/fiber/v3"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
-	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-func WorkflowRun(c fiber.Ctx, pool *pgxpool.Pool) error {
+func (h *Handler) WorkflowRun(c fiber.Ctx) error {
 	var r struct {
 		WorkflowID string `json:"workflow_id"`
 	}
@@ -31,7 +30,7 @@ func WorkflowRun(c fiber.Ctx, pool *pgxpool.Pool) error {
 
 	ctx := context.Background()
 	var workflowExists bool
-	err := pool.QueryRow(
+	err := h.pool.QueryRow(
 		ctx,
 		`
 		SELECT EXISTS (
@@ -51,7 +50,7 @@ func WorkflowRun(c fiber.Ctx, pool *pgxpool.Pool) error {
 			SendString("workflow not found")
 	}
 
-	rows, err := pool.Query(
+	rows, err := h.pool.Query(
 		ctx,
 		`
 		SELECT
@@ -103,7 +102,7 @@ func WorkflowRun(c fiber.Ctx, pool *pgxpool.Pool) error {
 			SendString("workflow has no steps")
 	}
 
-	tx, err := pool.Begin(ctx)
+	tx, err := h.pool.Begin(ctx)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).
 			SendString(err.Error())
@@ -202,8 +201,8 @@ func WorkflowRun(c fiber.Ctx, pool *pgxpool.Pool) error {
 	})
 }
 
-func GetWorkflowRuns(c fiber.Ctx, pool *pgxpool.Pool) error {
-	rows, err := pool.Query(
+func (h *Handler) GetWorkflowRuns(c fiber.Ctx) error {
+	rows, err := h.pool.Query(
 		context.Background(),
 		`
 		SELECT
@@ -244,14 +243,14 @@ func GetWorkflowRuns(c fiber.Ctx, pool *pgxpool.Pool) error {
 	return c.JSON(runs)
 }
 
-func GetWorkflowRun(c fiber.Ctx, pool *pgxpool.Pool) error {
+func (h *Handler) GetWorkflowRun(c fiber.Ctx) error {
 	id := c.Params("id")
 	if id == "" {
 		return c.Status(fiber.StatusBadRequest).SendString("workflow run id is required")
 	}
 
 	var run models.WorkflowRunResponse
-	err := pool.QueryRow(
+	err := h.pool.QueryRow(
 		context.Background(),
 		`
 		SELECT
