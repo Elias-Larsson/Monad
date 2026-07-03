@@ -11,11 +11,85 @@ services:
       - "5433:5432"
     volumes:
       - monad-postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d workflow"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   rabbitmq:
     image: rabbitmq:3-management
+    container_name: monad-rabbitmq
+    restart: unless-stopped
     ports:
       - "5672:5672"
       - "15672:15672"
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build:
+      context: ./server
+    image: monad-server:local
+    container_name: monad-api
+    restart: unless-stopped
+    command: ["/usr/local/bin/api"]
+    environment:
+      PORT: "3000"
+      DATABASE_URL: "postgres://postgres:postgres@postgres:5432/workflow?sslmode=disable"
+      RABBITMQ_URL: "amqp://guest:guest@rabbitmq:5672/"
+      RABBITMQ_QUEUE: "tasks"
+    ports:
+      - "3000:3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "-", "http://localhost:3000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  worker:
+    build:
+      context: ./server
+    image: monad-server:local
+    container_name: monad-worker
+    restart: unless-stopped
+    command: ["/usr/local/bin/worker"]
+    environment:
+      DATABASE_URL: "postgres://postgres:postgres@postgres:5432/workflow?sslmode=disable"
+      RABBITMQ_URL: "amqp://guest:guest@rabbitmq:5672/"
+      RABBITMQ_QUEUE: "tasks"
+      WORKER_CONCURRENCY: "2"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: ./monad
+      args:
+        NEXT_PUBLIC_API_URL: "${NEXT_PUBLIC_API_URL:-http://localhost:3000}"
+    image: monad-frontend:local
+    container_name: monad-frontend
+    restart: unless-stopped
+    environment:
+      NODE_ENV: "production"
+      PORT: "3010"
+      NEXT_PUBLIC_API_URL: "${NEXT_PUBLIC_API_URL:-http://localhost:3000}"
+    ports:
+      - "3010:3010"
+    depends_on:
+      api:
+        condition: service_healthy
 
 volumes:
   monad-postgres:
