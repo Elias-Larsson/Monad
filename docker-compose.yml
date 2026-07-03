@@ -50,7 +50,8 @@ services:
       rabbitmq:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "wget", "-q", "-O", "-", "http://localhost:3000/health"]
+      test: ["CMD", "wget", "-q", "-O", "-", "http://127.0.0.1:3000/health"]
+      start_period: 20s
       interval: 10s
       timeout: 5s
       retries: 5
@@ -77,14 +78,14 @@ services:
     build:
       context: ./monad
       args:
-        NEXT_PUBLIC_API_URL: "${NEXT_PUBLIC_API_URL:-http://localhost:3000}"
+        NEXT_PUBLIC_API_URL: "${NEXT_PUBLIC_API_URL:-}"
     image: monad-frontend:local
     container_name: monad-frontend
     restart: unless-stopped
     environment:
       NODE_ENV: "production"
       PORT: "3010"
-      NEXT_PUBLIC_API_URL: "${NEXT_PUBLIC_API_URL:-http://localhost:3000}"
+      NEXT_PUBLIC_API_URL: "${NEXT_PUBLIC_API_URL:-}"
     ports:
       - "3010:3010"
     depends_on:
