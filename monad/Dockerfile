@@ -10,7 +10,9 @@ FROM oven/bun:1 AS builder
 WORKDIR /app
 
 ARG NEXT_PUBLIC_API_URL=
+ARG INTERNAL_API_URL=http://api:3000
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
+ENV INTERNAL_API_URL=$INTERNAL_API_URL
 
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
@@ -23,6 +25,7 @@ WORKDIR /app
 
 ENV NODE_ENV=production
 ENV PORT=3010
+ENV INTERNAL_API_URL=http://api:3000
 
 COPY --from=builder /app ./
 

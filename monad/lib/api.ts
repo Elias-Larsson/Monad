@@ -13,7 +13,7 @@ function getApiBaseURL() {
   }
 
   if (typeof window !== "undefined") {
-    return `${window.location.protocol}//${window.location.hostname}:3000`;
+    return "/api";
   }
 
   return "http://api:3000";

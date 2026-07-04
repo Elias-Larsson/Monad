@@ -78,6 +78,7 @@ services:
     build:
       context: ./monad
       args:
+        INTERNAL_API_URL: "http://api:3000"
         NEXT_PUBLIC_API_URL: "${NEXT_PUBLIC_API_URL:-}"
     image: monad-frontend:local
     container_name: monad-frontend
@@ -85,6 +86,7 @@ services:
     environment:
       NODE_ENV: "production"
       PORT: "3010"
+      INTERNAL_API_URL: "http://api:3000"
       NEXT_PUBLIC_API_URL: "${NEXT_PUBLIC_API_URL:-}"
     ports:
       - "3010:3010"
