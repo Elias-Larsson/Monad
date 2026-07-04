@@ -33,3 +33,36 @@ func GenerateToken(userID string, email string) (string, error) {
 
 	return token.SignedString([]byte(secret))
 }
+
+func ValidateToken(tokenString string) (*Claims, error) {
+	secret := os.Getenv("JWT_SECRET")
+	if secret == "" {
+		return nil, errors.New("JWT_SECRET is not set")
+	}
+
+	claims := &Claims{}
+
+	token, err := jwt.ParseWithClaims(
+		tokenString,
+		claims,
+		func(token *jwt.Token) (interface{}, error) {
+			return []byte(secret), nil
+		},
+		jwt.WithIssuer("monad"),
+		jwt.WithExpirationRequired(),
+		jwt.WithValidMethods([]string{"HS256"}),
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	if !token.Valid {
+		return nil, errors.New("invalid token")
+	}
+
+	if claims.Subject == "" {
+		return nil, errors.New("token is missing user id")
+	}
+
+	return claims, nil
+}
