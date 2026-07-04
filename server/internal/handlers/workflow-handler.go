@@ -3,6 +3,7 @@ package handlers
 import (
 	"context"
 	"encoding/json"
+	"strings"
 
 	"monad/models"
 
@@ -19,6 +20,11 @@ func (h *Handler) WorkflowDelete(c fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).SendString("workflow id is required")
 	}
 
+	userID, err := requireUserID(c)
+	if err != nil {
+		return err
+	}
+
 	ctx := context.Background()
 	tx, err := h.pool.Begin(ctx)
 	if err != nil {
@@ -31,12 +37,15 @@ func (h *Handler) WorkflowDelete(c fiber.Ctx) error {
 		`
 		DELETE FROM tasks
 		WHERE workflow_run_id IN (
-			SELECT id
-			FROM workflow_runs
-			WHERE workflow_id = $1
+			SELECT wr.id
+			FROM workflow_runs wr
+			JOIN workflows w ON w.id = wr.workflow_id
+			WHERE wr.workflow_id = $1
+				AND w.user_id = $2
 		)
 		`,
 		id,
+		userID,
 	); err != nil {
 		return c.Status(fiber.StatusInternalServerError).SendString(err.Error())
 	}
@@ -45,9 +54,15 @@ func (h *Handler) WorkflowDelete(c fiber.Ctx) error {
 		ctx,
 		`
 		DELETE FROM workflow_runs
-		WHERE workflow_id = $1
+		WHERE workflow_id IN (
+			SELECT id
+			FROM workflows
+			WHERE id = $1
+				AND user_id = $2
+		)
 		`,
 		id,
+		userID,
 	); err != nil {
 		return c.Status(fiber.StatusInternalServerError).SendString(err.Error())
 	}
@@ -56,9 +71,15 @@ func (h *Handler) WorkflowDelete(c fiber.Ctx) error {
 		ctx,
 		`
 		DELETE FROM workflow_steps
-		WHERE workflow_id = $1
+		WHERE workflow_id IN (
+			SELECT id
+			FROM workflows
+			WHERE id = $1
+				AND user_id = $2
+		)
 		`,
 		id,
+		userID,
 	); err != nil {
 		return c.Status(fiber.StatusInternalServerError).SendString(err.Error())
 	}
@@ -68,8 +89,10 @@ func (h *Handler) WorkflowDelete(c fiber.Ctx) error {
 		`
 		DELETE FROM workflows
 		WHERE id = $1
+			AND user_id = $2
 		`,
 		id,
+		userID,
 	)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).SendString(err.Error())
@@ -92,15 +115,20 @@ func (h *Handler) WorkflowCreate(c fiber.Ctx) error {
 			SendString(err.Error())
 	}
 
-	if request.ID == "" {
-		return c.Status(fiber.StatusBadRequest).SendString("workflow id is required")
-	}
+	request.Name = strings.TrimSpace(request.Name)
 	if request.Name == "" {
 		return c.Status(fiber.StatusBadRequest).SendString("workflow name is required")
 	}
 	if len(request.Steps) == 0 {
 		return c.Status(fiber.StatusBadRequest).SendString("workflow steps are required")
 	}
+
+	userID, err := requireUserID(c)
+	if err != nil {
+		return err
+	}
+
+	workflowID := uuid.New().String()
 
 	ctx := context.Background()
 	tx, err := h.pool.Begin(ctx)
@@ -111,8 +139,9 @@ func (h *Handler) WorkflowCreate(c fiber.Ctx) error {
 
 	response := models.WorkflowResponse{
 		Workflow: models.Workflow{
-			ID:   request.ID,
-			Name: request.Name,
+			ID:     workflowID,
+			UserId: userID,
+			Name:   request.Name,
 		},
 		Steps: []models.WorkflowStepResponse{},
 	}
@@ -122,13 +151,15 @@ func (h *Handler) WorkflowCreate(c fiber.Ctx) error {
 		`
 		INSERT INTO workflows (
 			id,
+			user_id,
 			name
 		)
-		VALUES ($1, $2)
+		VALUES ($1, $2, $3)
 		ON CONFLICT (id) DO NOTHING
 		RETURNING created_at
 		`,
-		request.ID,
+		workflowID,
+		userID,
 		request.Name,
 	).Scan(&response.CreatedAt)
 	if err != nil {
@@ -160,7 +191,7 @@ func (h *Handler) WorkflowCreate(c fiber.Ctx) error {
 
 		step := models.WorkflowStepResponse{
 			ID:         uuid.New().String(),
-			WorkflowID: request.ID,
+			WorkflowID: workflowID,
 			StepOrder:  stepOrder,
 			TaskType:   requestStep.TaskType,
 			Payload:    requestStep.Payload,
@@ -211,16 +242,24 @@ func (h *Handler) WorkflowCreate(c fiber.Ctx) error {
 }
 
 func (h *Handler) GetWorkflows(c fiber.Ctx) error {
+	userID, err := requireUserID(c)
+	if err != nil {
+		return err
+	}
+
 	rows, err := h.pool.Query(
 		context.Background(),
 		`
 		SELECT
 			id,
+			user_id,
 			name,
 			created_at
 		FROM workflows
+		WHERE user_id = $1
 		ORDER BY created_at DESC
 		`,
+		userID,
 	)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).SendString(err.Error())
@@ -232,6 +271,7 @@ func (h *Handler) GetWorkflows(c fiber.Ctx) error {
 		var workflow models.WorkflowResponse
 		if err := rows.Scan(
 			&workflow.ID,
+			&workflow.UserId,
 			&workflow.Name,
 			&workflow.CreatedAt,
 		); err != nil {
@@ -254,22 +294,32 @@ func (h *Handler) GetWorkflow(c fiber.Ctx) error {
 	if id == "" {
 		return c.Status(fiber.StatusBadRequest).SendString("workflow id is required")
 	}
+
+	userID, err := requireUserID(c)
+	if err != nil {
+		return err
+	}
+
 	var workflow models.WorkflowResponse
 
-	err := h.pool.QueryRow(
+	err = h.pool.QueryRow(
 		context.Background(),
 		`
 		SELECT
 			id,
+			user_id,
 			name,
 			created_at
 		FROM workflows
 
 		WHERE id = $1
+			AND user_id = $2
 		`,
 		id,
+		userID,
 	).Scan(
 		&workflow.ID,
+		&workflow.UserId,
 		&workflow.Name,
 		&workflow.CreatedAt,
 	)

@@ -34,7 +34,6 @@ function createEmptyStep(): StepForm {
 export const CreateWorkflowForm = ({ onCreated }: CreateWorkflowFormProps) => {
   const [creating, setCreating] = useState(false);
   const [createError, setCreateError] = useState("");
-  const [workflowID, setWorkflowID] = useState("");
   const [workflowName, setWorkflowName] = useState("");
   const [steps, setSteps] = useState<StepForm[]>([createEmptyStep()]);
 
@@ -42,8 +41,8 @@ export const CreateWorkflowForm = ({ onCreated }: CreateWorkflowFormProps) => {
     event.preventDefault();
     setCreateError("");
 
-    if (!workflowID.trim() || !workflowName.trim()) {
-      setCreateError("Workflow id and name are required.");
+    if (!workflowName.trim()) {
+      setCreateError("Workflow name is required.");
       return;
     }
     if (steps.length === 0) {
@@ -73,11 +72,9 @@ export const CreateWorkflowForm = ({ onCreated }: CreateWorkflowFormProps) => {
     try {
       setCreating(true);
       await createWorkflow({
-        id: workflowID.trim(),
         name: workflowName.trim(),
         steps: parsedSteps,
       });
-      setWorkflowID("");
       setWorkflowName("");
       setSteps([createEmptyStep()]);
       await onCreated();
@@ -110,19 +107,7 @@ export const CreateWorkflowForm = ({ onCreated }: CreateWorkflowFormProps) => {
         </p>
       </div>
 
-      <div className="mt-4 grid gap-4 sm:grid-cols-2">
-        <label className="flex flex-col gap-2">
-          <span className="text-sm font-medium text-neutral-700">
-            Workflow id
-          </span>
-          <input
-            value={workflowID}
-            onChange={(event) => setWorkflowID(event.target.value)}
-            placeholder="test-workflow"
-            className="h-10 rounded-md border border-neutral-300 bg-white px-3 text-sm outline-none focus:border-neutral-950"
-          />
-        </label>
-
+      <div className="mt-4">
         <label className="flex flex-col gap-2">
           <span className="text-sm font-medium text-neutral-700">Name</span>
           <input

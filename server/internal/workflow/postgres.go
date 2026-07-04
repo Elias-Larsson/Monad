@@ -94,6 +94,10 @@ func EnsureSchema(ctx context.Context, pool *pgxpool.Pool) error {
 		ON tasks (workflow_run_id, step_order)
 		`,
 		`
+		CREATE INDEX IF NOT EXISTS workflow_runs_workflow_id_idx
+		ON workflow_runs (workflow_id)
+		`,
+		`
 		CREATE INDEX IF NOT EXISTS workflows_user_id_idx
 		ON workflows (user_id)
 		`,

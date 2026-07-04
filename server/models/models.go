@@ -6,13 +6,12 @@ import (
 )
 
 type Workflow struct {
-	ID   string `json:"id"`
+	ID     string `json:"id"`
 	UserId string `json:"user_id"`
-	Name string `json:"name"`
+	Name   string `json:"name"`
 }
 
 type WorkflowCreateRequest struct {
-	ID    string                      `json:"id"`
 	Name  string                      `json:"name"`
 	Steps []WorkflowStepCreateRequest `json:"steps"`
 }
@@ -85,7 +84,7 @@ type TaskResponse struct {
 }
 
 type User struct {
-	ID string
-	Email string
+	ID       string
+	Email    string
 	Password string
 }
