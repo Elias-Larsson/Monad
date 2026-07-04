@@ -37,6 +37,8 @@ services:
     container_name: monad-api
     restart: unless-stopped
     command: ["/usr/local/bin/api"]
+    env_file:
+      - ./server/.env.local
     environment:
       PORT: "3000"
       DATABASE_URL: "postgres://postgres:postgres@postgres:5432/workflow?sslmode=disable"
