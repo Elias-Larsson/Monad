@@ -30,5 +30,7 @@ func Setup(app *fiber.App, pool *pgxpool.Pool) {
 
 	app.Get("/tasks", h.GetTasks)
 
-	app.Post("/user", h.UserCreate)
+	app.Post("/auth/register", h.UserCreate)
+
+	app.Post("/auth/login", h.Login)
 }
