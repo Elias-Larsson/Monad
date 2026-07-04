@@ -26,20 +26,27 @@ func (h *Handler) WorkflowRun(c fiber.Ctx) error {
 			SendString("workflow_id is required")
 	}
 
+	userID, err := requireUserID(c)
+	if err != nil {
+		return err
+	}
+
 	runID := uuid.New().String()
 
 	ctx := context.Background()
 	var workflowExists bool
-	err := h.pool.QueryRow(
+	err = h.pool.QueryRow(
 		ctx,
 		`
 		SELECT EXISTS (
 			SELECT 1
 			FROM workflows
 			WHERE id = $1
+				AND user_id = $2
 		)
 		`,
 		r.WorkflowID,
+		userID,
 	).Scan(&workflowExists)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).
@@ -54,15 +61,18 @@ func (h *Handler) WorkflowRun(c fiber.Ctx) error {
 		ctx,
 		`
 		SELECT
-			id,
-			step_order,
-			task_type,
-			COALESCE(payload, '{}'::jsonb)
+			workflow_steps.id,
+			workflow_steps.step_order,
+			workflow_steps.task_type,
+			COALESCE(workflow_steps.payload, '{}'::jsonb)
 		FROM workflow_steps
-		WHERE workflow_id = $1
-		ORDER BY step_order ASC
+		JOIN workflows ON workflows.id = workflow_steps.workflow_id
+		WHERE workflow_steps.workflow_id = $1
+			AND workflows.user_id = $2
+		ORDER BY workflow_steps.step_order ASC
 		`,
 		r.WorkflowID,
+		userID,
 	)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).
@@ -202,18 +212,26 @@ func (h *Handler) WorkflowRun(c fiber.Ctx) error {
 }
 
 func (h *Handler) GetWorkflowRuns(c fiber.Ctx) error {
+	userID, err := requireUserID(c)
+	if err != nil {
+		return err
+	}
+
 	rows, err := h.pool.Query(
 		context.Background(),
 		`
 		SELECT
-			id,
-			workflow_id,
-			status,
-			created_at,
-			completed_at
+			workflow_runs.id,
+			workflow_runs.workflow_id,
+			workflow_runs.status,
+			workflow_runs.created_at,
+			workflow_runs.completed_at
 		FROM workflow_runs
-		ORDER BY created_at DESC
+		JOIN workflows ON workflows.id = workflow_runs.workflow_id
+		WHERE workflows.user_id = $1
+		ORDER BY workflow_runs.created_at DESC
 		`,
+		userID,
 	)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).SendString(err.Error())
@@ -249,20 +267,28 @@ func (h *Handler) GetWorkflowRun(c fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).SendString("workflow run id is required")
 	}
 
+	userID, err := requireUserID(c)
+	if err != nil {
+		return err
+	}
+
 	var run models.WorkflowRunResponse
-	err := h.pool.QueryRow(
+	err = h.pool.QueryRow(
 		context.Background(),
 		`
 		SELECT
-			id,
-			workflow_id,
-			status,
-			created_at,
-			completed_at
+			workflow_runs.id,
+			workflow_runs.workflow_id,
+			workflow_runs.status,
+			workflow_runs.created_at,
+			workflow_runs.completed_at
 		FROM workflow_runs
-		WHERE id = $1
+		JOIN workflows ON workflows.id = workflow_runs.workflow_id
+		WHERE workflow_runs.id = $1
+			AND workflows.user_id = $2
 		`,
 		id,
+		userID,
 	).Scan(
 		&run.ID,
 		&run.WorkflowID,

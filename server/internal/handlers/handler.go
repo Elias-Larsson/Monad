@@ -18,6 +18,15 @@ func New(pool *pgxpool.Pool) *Handler {
 	}
 }
 
+func requireUserID(c fiber.Ctx) (string, error) {
+	userID, ok := c.Locals("user_id").(string)
+	if !ok || userID == "" {
+		return "", c.Status(fiber.StatusUnauthorized).SendString("missing authenticated user")
+	}
+
+	return userID, nil
+}
+
 func (h *Handler) Health(c fiber.Ctx) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancel()
