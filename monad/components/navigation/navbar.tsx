@@ -4,6 +4,7 @@ export const NavBar = () => {
   const navItems = [
     { label: "Home", href: "/" },
     { label: "Workflows", href: "/workflows" },
+    { label: "History", href: "/history" },
     { label: "Account", href: "/login" },
   ];
 
