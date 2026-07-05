@@ -8,9 +8,14 @@ import { WorkflowNav } from "@/components/navigation/workflownav";
 import { WorkflowRunDetailsModal } from "@/components/workflow-runs/workflow-run-details-modal";
 import { WorkflowRunsList } from "@/components/workflow-runs/workflow-runs-list";
 import { getTasks, getWorkflowRuns, getWorkflows } from "@/lib/api";
+import { workflowRunWebSocketURL } from "@/lib/realtime";
 import { Task } from "@/types/task";
-import { WorkflowRun } from "@/types/workflow-run";
+import { WorkflowRun, WorkflowRunLiveUpdate } from "@/types/workflow-run";
 import { Workflow } from "@/types/workflow";
+
+function sortTasksByStepOrder(tasks: Task[]) {
+  return [...tasks].sort((a, b) => a.step_order - b.step_order);
+}
 
 export default function WorkflowRunPage() {
   const [workflows, setWorkflows] = useState<Workflow[]>([]);
@@ -28,34 +33,27 @@ export default function WorkflowRunPage() {
     setRuns(runData);
   }, []);
 
-  const loadData = useCallback(
-    async (options: { showLoading?: boolean } = {}) => {
-      const showLoading = options.showLoading ?? false;
+  const loadData = useCallback(async () => {
+    try {
+      const [workflowData, runData] = await Promise.all([
+        getWorkflows(),
+        getWorkflowRuns(),
+      ]);
 
-      if (showLoading) {
-        setLoading(true);
-      }
-
-      try {
-        setLoadFailed(false);
-        const [workflowData, runData] = await Promise.all([
-          getWorkflows(),
-          getWorkflowRuns(),
-        ]);
-
-        setWorkflows(workflowData);
-        setRuns(runData);
-      } catch {
-        setLoadFailed(true);
-      } finally {
-        setLoading(false);
-      }
-    },
-    [],
-  );
+      setLoadFailed(false);
+      setWorkflows(workflowData);
+      setRuns(runData);
+    } catch {
+      setLoadFailed(true);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
-    loadData({ showLoading: true });
+    const timeoutID = window.setTimeout(() => {
+      void loadData();
+    }, 0);
 
     const intervalID = window.setInterval(async () => {
       try {
@@ -65,8 +63,49 @@ export default function WorkflowRunPage() {
       }
     }, 2000);
 
-    return () => window.clearInterval(intervalID);
+    return () => {
+      window.clearTimeout(timeoutID);
+      window.clearInterval(intervalID);
+    };
   }, [loadData, loadRuns]);
+
+  useEffect(() => {
+    if (!selectedRunID) {
+      return;
+    }
+
+    const socket = new WebSocket(workflowRunWebSocketURL(selectedRunID));
+
+    socket.onmessage = (event) => {
+      let update: WorkflowRunLiveUpdate;
+      try {
+        update = JSON.parse(event.data) as WorkflowRunLiveUpdate;
+      } catch {
+        return;
+      }
+
+      if (update.workflow_run_id !== selectedRunID) {
+        return;
+      }
+
+      setRuns((currentRuns) =>
+        currentRuns.map((run) =>
+          run.id === update.run.id ? update.run : run,
+        ),
+      );
+      setSelectedRunTasks(sortTasksByStepOrder(update.tasks));
+      setDetailsLoading(false);
+      setDetailsFailed(false);
+    };
+
+    socket.onerror = () => {
+      setDetailsFailed(true);
+    };
+
+    return () => {
+      socket.close();
+    };
+  }, [selectedRunID]);
 
   async function openRunDetails(runID: string) {
     setSelectedRunID(runID);
@@ -77,9 +116,9 @@ export default function WorkflowRunPage() {
     try {
       const tasks = await getTasks();
       setSelectedRunTasks(
-        tasks
-          .filter((task) => task.workflow_run_id === runID)
-          .sort((a, b) => a.step_order - b.step_order),
+        sortTasksByStepOrder(
+          tasks.filter((task) => task.workflow_run_id === runID),
+        ),
       );
     } catch {
       setDetailsFailed(true);

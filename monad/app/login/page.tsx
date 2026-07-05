@@ -1,7 +1,5 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-
 import { AuthForm } from "@/components/forms/auth-form";
 import { login } from "@/lib/api";
 import type { LoginRequest } from "@/types/login";
@@ -17,11 +15,9 @@ function getRedirectPath() {
 }
 
 export default function LoginPage() {
-  const router = useRouter();
-
   async function handleLogin(body: LoginRequest) {
     await login(body);
-    router.replace(getRedirectPath());
+    window.location.replace(getRedirectPath());
   }
 
   return (

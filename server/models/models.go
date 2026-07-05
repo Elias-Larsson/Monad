@@ -35,6 +35,20 @@ type WorkflowRunResponse struct {
 	CompletedAt *time.Time `json:"completed_at"`
 }
 
+const WorkflowRunEventsChannel = "workflow_run_events"
+
+type WorkflowRunUpdatedNotification struct {
+	Type          string `json:"type"`
+	WorkflowRunID string `json:"workflow_run_id"`
+}
+
+type WorkflowRunLiveUpdate struct {
+	Type          string              `json:"type"`
+	WorkflowRunID string              `json:"workflow_run_id"`
+	Run           WorkflowRunResponse `json:"run"`
+	Tasks         []TaskResponse      `json:"tasks"`
+}
+
 type WorkflowStepCreateRequest struct {
 	StepOrder *int            `json:"step_order,omitempty"`
 	TaskType  string          `json:"task_type"`

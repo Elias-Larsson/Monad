@@ -1,3 +1,5 @@
+import type { Task } from "@/types/task";
+
 export type WorkflowRun = {
   id: string;
   workflow_id: string;
@@ -15,4 +17,11 @@ export type CreateWorkflowRunResponse = {
   task_id: string;
   task_ids: string[];
   status: "PENDING";
+};
+
+export type WorkflowRunLiveUpdate = {
+  type: "workflow_run_updated";
+  workflow_run_id: string;
+  run: WorkflowRun;
+  tasks: Task[];
 };

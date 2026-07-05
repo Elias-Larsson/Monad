@@ -1,14 +1,10 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-
 import { AuthForm } from "@/components/forms/auth-form";
 import { login, register } from "@/lib/api";
 import type { LoginRequest } from "@/types/login";
 
 export default function RegisterPage() {
-  const router = useRouter();
-
   async function handleRegister(body: LoginRequest) {
     const res = await register(body);
 
@@ -17,7 +13,7 @@ export default function RegisterPage() {
       password: body.password,
     });
 
-    router.replace("/dashboard");
+    window.location.replace("/dashboard");
   }
 
   return (

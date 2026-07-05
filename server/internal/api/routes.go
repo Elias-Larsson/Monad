@@ -3,13 +3,14 @@ package routes
 import (
 	"monad/internal/auth"
 	"monad/internal/handlers"
+	"monad/internal/realtime"
 
 	"github.com/gofiber/fiber/v3"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-func Setup(app *fiber.App, pool *pgxpool.Pool) {
-	h := handlers.New(pool)
+func Setup(app *fiber.App, pool *pgxpool.Pool, hub *realtime.Hub) {
+	h := handlers.New(pool, hub)
 
 	app.Get("/health", h.Health)
 
@@ -29,4 +30,6 @@ func Setup(app *fiber.App, pool *pgxpool.Pool) {
 
 	protected.Get("/tasks/:id", h.GetTask)
 	protected.Get("/tasks", h.GetTasks)
+
+	protected.Get("/ws/workflow-runs/:id", h.WorkflowRunWebSocket)
 }

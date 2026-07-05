@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"context"
+	"monad/internal/realtime"
 	"time"
 
 	"github.com/gofiber/fiber/v3"
@@ -10,11 +11,13 @@ import (
 
 type Handler struct {
 	pool *pgxpool.Pool
+	hub  *realtime.Hub
 }
 
-func New(pool *pgxpool.Pool) *Handler {
+func New(pool *pgxpool.Pool, hub *realtime.Hub) *Handler {
 	return &Handler{
 		pool: pool,
+		hub:  hub,
 	}
 }
 

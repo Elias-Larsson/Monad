@@ -11,16 +11,23 @@ import (
 )
 
 func MarkTaskRunning(ctx context.Context, pool *pgxpool.Pool, taskID string) error {
-	_, err := pool.Exec(
+	var workflowRunID string
+	err := pool.QueryRow(
 		ctx,
 		`
 		UPDATE tasks
 		SET status = 'RUNNING'
 		WHERE id = $1
+		RETURNING workflow_run_id
 		`,
 		taskID,
-	)
-	return err
+	).Scan(&workflowRunID)
+	if err != nil {
+		return err
+	}
+
+	notifyWorkflowRunUpdated(ctx, pool, workflowRunID)
+	return nil
 }
 
 func MarkTaskCompleted(ctx context.Context, pool *pgxpool.Pool, taskID string, output []byte) error {
@@ -29,7 +36,8 @@ func MarkTaskCompleted(ctx context.Context, pool *pgxpool.Pool, taskID string, o
 		dbOutput = string(output)
 	}
 
-	_, err := pool.Exec(
+	var workflowRunID string
+	err := pool.QueryRow(
 		ctx,
 		`
 		UPDATE tasks
@@ -37,11 +45,17 @@ func MarkTaskCompleted(ctx context.Context, pool *pgxpool.Pool, taskID string, o
 		    output = $2::jsonb,
 		    completed_at = NOW()
 		WHERE id = $1
+		RETURNING workflow_run_id
 		`,
 		taskID,
 		dbOutput,
-	)
-	return err
+	).Scan(&workflowRunID)
+	if err != nil {
+		return err
+	}
+
+	notifyWorkflowRunUpdated(ctx, pool, workflowRunID)
+	return nil
 }
 
 func MarkTaskFailed(ctx context.Context, pool *pgxpool.Pool, taskID string, errorMessage string) error {
@@ -52,7 +66,8 @@ func MarkTaskFailed(ctx context.Context, pool *pgxpool.Pool, taskID string, erro
 		return err
 	}
 
-	_, err = pool.Exec(
+	var workflowRunID string
+	err = pool.QueryRow(
 		ctx,
 		`
 		UPDATE tasks
@@ -60,11 +75,17 @@ func MarkTaskFailed(ctx context.Context, pool *pgxpool.Pool, taskID string, erro
 		    output = $2::jsonb,
 		    completed_at = NOW()
 		WHERE id = $1
+		RETURNING workflow_run_id
 		`,
 		taskID,
 		string(output),
-	)
-	return err
+	).Scan(&workflowRunID)
+	if err != nil {
+		return err
+	}
+
+	notifyWorkflowRunUpdated(ctx, pool, workflowRunID)
+	return nil
 }
 
 func GetNextPendingTask(ctx context.Context, pool *pgxpool.Pool, workflowRunID string, currentStepOrder int) (models.TaskMessage, bool, error) {
@@ -109,7 +130,7 @@ func GetNextPendingTask(ctx context.Context, pool *pgxpool.Pool, workflowRunID s
 }
 
 func MarkWorkflowRunRunning(ctx context.Context, pool *pgxpool.Pool, workflowRunID string) error {
-	_, err := pool.Exec(
+	tag, err := pool.Exec(
 		ctx,
 		`
 		UPDATE workflow_runs
@@ -118,11 +139,14 @@ func MarkWorkflowRunRunning(ctx context.Context, pool *pgxpool.Pool, workflowRun
 		`,
 		workflowRunID,
 	)
+	if err == nil && tag.RowsAffected() > 0 {
+		notifyWorkflowRunUpdated(ctx, pool, workflowRunID)
+	}
 	return err
 }
 
 func MarkWorkflowRunCompleted(ctx context.Context, pool *pgxpool.Pool, workflowRunID string) error {
-	_, err := pool.Exec(
+	tag, err := pool.Exec(
 		ctx,
 		`
 		UPDATE workflow_runs
@@ -132,11 +156,14 @@ func MarkWorkflowRunCompleted(ctx context.Context, pool *pgxpool.Pool, workflowR
 		`,
 		workflowRunID,
 	)
+	if err == nil && tag.RowsAffected() > 0 {
+		notifyWorkflowRunUpdated(ctx, pool, workflowRunID)
+	}
 	return err
 }
 
 func MarkWorkflowRunFailed(ctx context.Context, pool *pgxpool.Pool, workflowRunID string) error {
-	_, err := pool.Exec(
+	tag, err := pool.Exec(
 		ctx,
 		`
 		UPDATE workflow_runs
@@ -146,5 +173,8 @@ func MarkWorkflowRunFailed(ctx context.Context, pool *pgxpool.Pool, workflowRunI
 		`,
 		workflowRunID,
 	)
+	if err == nil && tag.RowsAffected() > 0 {
+		notifyWorkflowRunUpdated(ctx, pool, workflowRunID)
+	}
 	return err
 }

@@ -4,8 +4,10 @@ import (
 	"context"
 	"log"
 	"os"
+	"time"
 
 	routes "monad/internal/api"
+	"monad/internal/realtime"
 	"monad/internal/workflow"
 
 	"github.com/gofiber/fiber/v3"
@@ -17,6 +19,10 @@ func main() {
 	app := fiber.New()
 	app.Use(cors.New())
 	app.Use(logger.New())
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
 	pool, err := workflow.NewPostgres(context.Background())
 	if err != nil {
 		log.Fatal(err)
@@ -25,7 +31,21 @@ func main() {
 	if err := workflow.EnsureSchema(context.Background(), pool); err != nil {
 		log.Fatal(err)
 	}
-	routes.Setup(app, pool)
+
+	hub := realtime.NewHub()
+	go func() {
+		for {
+			if err := realtime.ListenPostgres(ctx, pool, hub); err != nil {
+				log.Printf("realtime listener stopped: %v", err)
+			}
+			if ctx.Err() != nil {
+				return
+			}
+			time.Sleep(2 * time.Second)
+		}
+	}()
+
+	routes.Setup(app, pool, hub)
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "3000"
