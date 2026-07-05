@@ -16,18 +16,49 @@ type StepForm = {
 
 const taskTypes = ["print-message", "wait", "http-request", "json-transform"];
 
-const defaultStepPayload = JSON.stringify(
-  {
+const taskPayloadExamples: Record<string, Record<string, unknown>> = {
+  "print-message": {
     message: "hello from Monad",
   },
-  null,
-  2,
-);
+  wait: {
+    seconds: 3,
+  },
+  "http-request": {
+    method: "GET",
+    url: "https://jsonplaceholder.typicode.com/todos/1",
+    headers: {
+      Accept: "application/json",
+    },
+    body: null,
+  },
+  "json-transform": {
+    input: {
+      user: {
+        name: "Ada Lovelace",
+        email: "ada@example.com",
+      },
+      plan: "pro",
+    },
+    fields: {
+      name: "user.name",
+      email: "user.email",
+      plan: "plan",
+    },
+  },
+};
+
+function payloadForTaskType(taskType: string) {
+  return JSON.stringify(
+    taskPayloadExamples[taskType] ?? taskPayloadExamples["print-message"],
+    null,
+    2,
+  );
+}
 
 function createEmptyStep(): StepForm {
   return {
     taskType: "print-message",
-    payload: defaultStepPayload,
+    payload: payloadForTaskType("print-message"),
   };
 }
 
@@ -159,12 +190,14 @@ export const CreateWorkflowForm = ({ onCreated }: CreateWorkflowFormProps) => {
               </span>
               <select
                 value={step.taskType}
-                onChange={(event) =>
+                onChange={(event) => {
+                  const taskType = event.target.value;
                   updateStep(index, {
                     ...step,
-                    taskType: event.target.value,
-                  })
-                }
+                    taskType,
+                    payload: payloadForTaskType(taskType),
+                  });
+                }}
                 className="h-10 rounded-md border border-neutral-300 bg-white px-3 text-sm outline-none focus:border-neutral-950"
               >
                 {taskTypes.map((type) => (
@@ -187,7 +220,7 @@ export const CreateWorkflowForm = ({ onCreated }: CreateWorkflowFormProps) => {
                     payload: event.target.value,
                   })
                 }
-                rows={5}
+                rows={8}
                 className="rounded-md border border-neutral-300 bg-white px-3 py-2 font-mono text-sm outline-none focus:border-neutral-950"
               />
             </label>
