@@ -1,135 +1,271 @@
-import { NavBar } from "@/components/navigation/navbar";
-import { Logo } from "@/components/logo";
 import Image from "next/image";
-import styles from "./duck.module.css";
+
 import { Button } from "@/components/button/button";
+import { Logo } from "@/components/logo";
+import { NavBar } from "@/components/navigation/navbar";
 
-const stats = [
-  { label: "Workflow blueprints", value: "0" },
-  { label: "Queued runs", value: "0" },
-  { label: "Completed tasks", value: "0" },
-];
+import styles from "./duck.module.css";
 
-const howItWorks = [
+const productFlow = [
   {
     step: "01",
-    title: "Create a workflow",
+    label: "Sign in",
+    title: "Start with your own workspace.",
     description:
-      "A workflow is the blueprint users define before anything is executed.",
+      "Monad uses login so workflows, runs, and task history belong to the current user.",
   },
   {
     step: "02",
-    title: "Start a run",
+    label: "Create",
+    title: "Save a workflow blueprint.",
     description:
-      "The API creates a workflow run and stores task state in Postgres.",
+      "A workflow is a reusable sequence of task steps, such as print a message, wait, then continue.",
   },
   {
     step: "03",
-    title: "Queue the task",
+    label: "Run",
+    title: "Execute the workflow on demand.",
     description:
-      "RabbitMQ receives a JSON task message so execution can happen async.",
+      "Every run gets its own history, so the same workflow can be executed many times without losing previous results.",
   },
   {
     step: "04",
-    title: "Worker completes it",
+    label: "Inspect",
+    title: "Follow each task status.",
     description:
-      "A Go worker consumes the task, runs it, and updates Postgres.",
+      "The dashboard shows tasks moving through PENDING, RUNNING, COMPLETED, or FAILED.",
   },
+];
+
+const architectureFlow = [
+  {
+    title: "Dashboard",
+    description: "The user starts a run from the Next.js interface.",
+    tone: "border-sky-200 bg-sky-50 text-sky-950",
+  },
+  {
+    title: "Fiber API",
+    description: "The API checks auth, creates database records, and queues work.",
+    tone: "border-emerald-200 bg-emerald-50 text-emerald-950",
+  },
+  {
+    title: "Postgres",
+    description: "Workflow state, run history, task status, and outputs are stored here.",
+    tone: "border-violet-200 bg-violet-50 text-violet-950",
+  },
+  {
+    title: "RabbitMQ",
+    description: "Task messages wait in a queue until a worker is ready.",
+    tone: "border-amber-200 bg-amber-50 text-amber-950",
+  },
+  {
+    title: "Go worker",
+    description: "Workers consume queued tasks, execute them, and update Postgres.",
+    tone: "border-rose-200 bg-rose-50 text-rose-950",
+  },
+];
+
+const terms = [
+  {
+    title: "Workflow",
+    description: "The saved plan.",
+  },
+  {
+    title: "Run",
+    description: "One execution of the plan.",
+  },
+  {
+    title: "Task",
+    description: "One step inside the execution.",
+  },
+];
+
+const stack = [
+  "Go",
+  "Fiber",
+  "PostgreSQL",
+  "RabbitMQ",
+  "Docker Compose",
+  "Next.js",
+  "JWT auth",
+  "Workers",
 ];
 
 export default function Home() {
   return (
     <main className="min-h-screen bg-neutral-50 text-neutral-950">
       <NavBar />
-      <section className="flex flex-col mx-auto max-w-6xl px-6 py-10 gap-20">
-        <div className="flex flex-row items-center justify-between">
-          <div>
-            <Logo />
-            <h2 className="max-w-3xl text-4xl tracking-normal text-neutral-950">
-              Monad runs backend workflows through Go, Postgres, RabbitMQ, and
-              workers.
-            </h2>
 
-            <p className="mt-4 max-w-2xl leading-7 text-neutral-600">
-              Create workflows and run tasks in a single sequence. Inspect
-              worker progress from one small operational dashboard.
+      <section className="mx-auto max-w-6xl px-6 py-10 lg:py-14">
+        <section className="flex min-h-[560px] items-center justify-between gap-10">
+          <div className="max-w-3xl">
+            <Logo />
+
+            <h1 className="mt-4 max-w-3xl text-4xl leading-tight tracking-normal text-neutral-950 sm:text-5xl">
+              Create a workflow, run it, and watch the backend process each
+              task.
+            </h1>
+
+            <p className="mt-6 max-w-2xl text-lg leading-8 text-neutral-600">
+              Monad is a small workflow orchestration app. It turns repeatable
+              backend jobs into saved workflows that can be executed and
+              inspected from a dashboard.
             </p>
-            <Button name={"Open Dashboard"} />
+
+            <Button name="Open Dashboard" />
           </div>
+
           <a href="https://eliaslarsson.dev" className={styles.duckWrap}>
             <Image
               src="/duck.png"
-              alt="duck"
+              alt="Monad duck"
               width={144}
               height={144}
               className={styles.duck}
             />
           </a>
+        </section>
+      </section>
+
+      <section className="border-y border-neutral-200 bg-white">
+        <div className="mx-auto grid max-w-6xl gap-10 px-6 py-16 lg:grid-cols-[320px_1fr] lg:py-20">
+          <div>
+            <p className="text-sm font-medium text-neutral-500">
+              Product flow
+            </p>
+            <h2 className="mt-3 text-3xl leading-tight text-neutral-950">
+              The app follows one simple path.
+            </h2>
+            <p className="mt-4 leading-7 text-neutral-600">
+              Think of Monad as a place to define repeatable work, trigger it,
+              and see what happened.
+            </p>
+          </div>
+
+          <div className="space-y-4">
+            {productFlow.map((item) => (
+              <article
+                key={item.step}
+                className="grid gap-4 rounded-lg border border-neutral-200 bg-neutral-50 p-5 sm:grid-cols-[96px_1fr]"
+              >
+                <div>
+                  <p className="text-sm font-semibold text-neutral-400">
+                    {item.step}
+                  </p>
+                  <p className="mt-1 text-sm font-medium text-neutral-700">
+                    {item.label}
+                  </p>
+                </div>
+
+                <div>
+                  <h3 className="text-xl font-semibold text-neutral-950">
+                    {item.title}
+                  </h3>
+                  <p className="mt-2 leading-7 text-neutral-600">
+                    {item.description}
+                  </p>
+                </div>
+              </article>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="mx-auto grid max-w-6xl gap-10 px-6 py-16 lg:grid-cols-[1fr_360px] lg:py-20">
+        <div>
+          <p className="text-sm font-medium text-neutral-500">
+            Architecture flow
+          </p>
+          <h2 className="mt-3 max-w-3xl text-3xl leading-tight text-neutral-950">
+            A run moves from the dashboard, through the API, into the queue, and
+            back into stored state.
+          </h2>
+
+          <div className="mt-8 grid gap-4">
+            {architectureFlow.map((item, index) => (
+              <div key={item.title}>
+                <article
+                  className={`rounded-lg border p-5 ${item.tone}`}
+                >
+                  <p className="text-sm font-semibold">
+                    {String(index + 1).padStart(2, "0")}
+                  </p>
+                  <h3 className="mt-3 text-xl font-semibold">{item.title}</h3>
+                  <p className="mt-2 leading-7">{item.description}</p>
+                </article>
+
+                {index < architectureFlow.length - 1 ? (
+                  <div className="flex h-8 items-center justify-center text-sm font-semibold text-neutral-400">
+                    then
+                  </div>
+                ) : null}
+              </div>
+            ))}
+          </div>
         </div>
 
-        <section className="mt-12">
-          <div className="max-w-2xl">
-            <p className="text-sm font-medium text-neutral-500">How it works</p>
-            <h2 className="mt-2 text-3xl text-neutral-950">
-              From API request to completed task.
+        <aside className="self-start border-l-4 border-neutral-950 bg-white px-6 py-5">
+          <p className="text-sm font-medium text-neutral-500">
+            Important idea
+          </p>
+          <h3 className="mt-2 text-2xl leading-tight text-neutral-950">
+            RabbitMQ does not replace the database.
+          </h3>
+          <p className="mt-4 leading-7 text-neutral-600">
+            Postgres is the source of truth. RabbitMQ only carries task messages
+            to workers. That is why Monad can show workflow history, task
+            status, timestamps, and output after execution.
+          </p>
+        </aside>
+      </section>
+
+      <section className="border-y border-neutral-200 bg-white">
+        <div className="mx-auto grid max-w-6xl gap-10 px-6 py-16 lg:grid-cols-[360px_1fr] lg:py-20">
+          <div>
+            <p className="text-sm font-medium text-neutral-500">
+              Dashboard language
+            </p>
+            <h2 className="mt-3 text-3xl leading-tight text-neutral-950">
+              Three words make the app easier to understand.
             </h2>
           </div>
 
-          <div className="mt-6 grid gap-4 md:grid-cols-4">
-            {howItWorks.map((item) => (
-              <div
-                key={item.step}
-                className="rounded-lg border border-neutral-200 bg-white p-5"
+          <div className="grid gap-4 md:grid-cols-3">
+            {terms.map((term) => (
+              <article
+                key={term.title}
+                className="rounded-lg border border-neutral-200 bg-neutral-50 p-6"
               >
-                <p className="text-xs font-semibold text-neutral-400">
-                  {item.step}
-                </p>
-                <h3 className="mt-3 text-base font-semibold text-neutral-950">
-                  {item.title}
+                <h3 className="text-2xl font-semibold text-neutral-950">
+                  {term.title}
                 </h3>
-                <p className="mt-2 text-sm leading-6 text-neutral-600">
-                  {item.description}
+                <p className="mt-3 leading-7 text-neutral-600">
+                  {term.description}
                 </p>
-              </div>
+              </article>
             ))}
           </div>
-        </section>
+        </div>
+      </section>
 
-        <div className="grid gap-4 sm:grid-cols-3">
-          {stats.map((stat) => (
-            <div
-              key={stat.label}
-              className="rounded-lg border border-neutral-200 bg-white p-5"
-            >
-              <p className="text-sm text-neutral-500">{stat.label}</p>
-              <p className="mt-2 text-3xl font-semibold">{stat.value}</p>
-            </div>
-          ))}
+      <section className="mx-auto max-w-6xl px-6 py-16 lg:py-20">
+        <div className="max-w-2xl">
+          <p className="text-sm font-medium text-neutral-500">Built with</p>
+          <h2 className="mt-3 text-3xl leading-tight text-neutral-950">
+            A backend-focused Go project with a small dashboard.
+          </h2>
         </div>
 
-        <section className="mt-8 rounded-lg border border-neutral-200 bg-white p-6">
-          <div className="flex flex-col gap-2 border-b border-neutral-200 pb-4">
-            <p className="text-sm font-medium text-neutral-500">System</p>
-            <h2 className="text-xl font-semibold">Current backend pieces</h2>
-          </div>
-
-          <div className="grid gap-4 pt-5 md:grid-cols-5">
-            {[
-              "Fiber API",
-              "PostgreSQL",
-              "RabbitMQ",
-              "Go worker",
-              "Auth Server",
-            ].map((item) => (
-              <div
-                key={item}
-                className="rounded-md border border-neutral-200 p-4 text-sm font-medium text-neutral-700"
-              >
-                {item}
-              </div>
-            ))}
-          </div>
-        </section>
+        <div className="mt-8 flex flex-wrap gap-3">
+          {stack.map((item) => (
+            <span
+              key={item}
+              className="rounded-md border border-neutral-200 bg-white px-4 py-2 text-sm font-medium text-neutral-700"
+            >
+              {item}
+            </span>
+          ))}
+        </div>
       </section>
     </main>
   );
