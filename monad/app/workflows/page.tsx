@@ -1,11 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import { CreateWorkflowForm } from "@/components/forms/create-workflow-form";
 import { EmptyState } from "@/components/empty-state";
 import { NavBar } from "@/components/navigation/navbar";
-import { WorkflowNav } from "@/components/navigation/workflownav";
 import { WorkflowsList } from "@/components/workflows";
 import { deleteWorkflow, getWorkflows } from "@/lib/api";
 import { Workflow } from "@/types/workflow";
@@ -17,7 +16,7 @@ export default function WorkflowsPage() {
   const [deleteError, setDeleteError] = useState("");
   const [deletingWorkflowID, setDeletingWorkflowID] = useState("");
 
-  async function loadWorkflows() {
+  const loadWorkflows = useCallback(async () => {
     try {
       setLoadFailed(false);
       const data = await getWorkflows();
@@ -27,11 +26,15 @@ export default function WorkflowsPage() {
     } finally {
       setLoading(false);
     }
-  }
+  }, []);
 
   useEffect(() => {
-    loadWorkflows();
-  }, []);
+    const timeoutID = window.setTimeout(() => {
+      void loadWorkflows();
+    }, 0);
+
+    return () => window.clearTimeout(timeoutID);
+  }, [loadWorkflows]);
 
   async function handleDeleteWorkflow(id: string) {
     const confirmed = window.confirm(
@@ -60,9 +63,7 @@ export default function WorkflowsPage() {
     <main className="min-h-screen bg-neutral-50 text-neutral-950">
       <NavBar />
 
-      <div className="mx-auto grid max-w-6xl gap-8 px-6 py-8 lg:grid-cols-[220px_1fr]">
-        <WorkflowNav />
-
+      <div className="mx-auto max-w-6xl px-6 py-8">
         <section className="min-h-[520px] rounded-lg border border-neutral-200 bg-white p-6">
           <div className="flex flex-col gap-2 border-b border-neutral-200 pb-5">
             <p className="text-sm font-medium text-neutral-500">Workspace</p>

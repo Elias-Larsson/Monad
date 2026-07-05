@@ -7,11 +7,15 @@ import type { LoginRequest } from "@/types/login";
 function getRedirectPath() {
   const nextPath = new URLSearchParams(window.location.search).get("next");
 
+  if (nextPath === "/dashboard") {
+    return "/workflows";
+  }
+
   if (nextPath && nextPath.startsWith("/") && !nextPath.startsWith("//")) {
     return nextPath;
   }
 
-  return "/dashboard";
+  return "/workflows";
 }
 
 export default function LoginPage() {

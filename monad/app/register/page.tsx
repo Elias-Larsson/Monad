@@ -13,7 +13,7 @@ export default function RegisterPage() {
       password: body.password,
     });
 
-    window.location.replace("/dashboard");
+    window.location.replace("/workflows");
   }
 
   return (
