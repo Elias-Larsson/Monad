@@ -1,3 +1,4 @@
+import { LoginRequest, LoginResponse } from "@/types/login";
 import { Task } from "@/types/task";
 import { CreateWorkflowRequest, Workflow } from "@/types/workflow";
 import {
@@ -30,6 +31,7 @@ function expectArray<T>(data: unknown, endpoint: string): T[] {
 export const api = axios.create({
   baseURL: getApiBaseURL(),
   timeout: 10_000,
+  withCredentials: true,
   headers: {
     "Content-Type": "application/json",
   },
@@ -89,4 +91,9 @@ export async function getTask(id: string): Promise<Task> {
 export async function healthCheck(): Promise<boolean> {
   const response = await api.get(`/health`);
   return response.status === 200;
+}
+
+export async function login(body: LoginRequest): Promise<LoginResponse> {
+  const response = await api.post<LoginResponse>("/auth/login", body);
+  return response.data;
 }

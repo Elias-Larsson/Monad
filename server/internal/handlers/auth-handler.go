@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"monad/internal/auth"
 	"strings"
+	"time"
 
 	"github.com/gofiber/fiber/v3"
 	"github.com/google/uuid"
@@ -22,8 +23,7 @@ type authUserResponse struct {
 }
 
 type loginResponse struct {
-	Token string           `json:"token"`
-	User  authUserResponse `json:"user"`
+	User authUserResponse `json:"user"`
 }
 
 func (h *Handler) UserCreate(c fiber.Ctx) error {
@@ -126,8 +126,17 @@ func (h *Handler) Login(c fiber.Ctx) error {
 		return c.Status(fiber.StatusInternalServerError).SendString(err.Error())
 	}
 
+	c.Cookie(&fiber.Cookie{
+		Name:     "access_token",
+		Value:    token,
+		Path:     "/",
+		HTTPOnly: true,
+		Secure:   false, // true in production HTTPS
+		SameSite: "Lax",
+		Expires:  time.Now().Add(24 * time.Hour),
+	})
+
 	return c.Status(fiber.StatusOK).JSON(loginResponse{
-		Token: token,
 		User: authUserResponse{
 			ID:    userID,
 			Email: r.Email,

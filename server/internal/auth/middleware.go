@@ -11,6 +11,10 @@ func Middleware(c fiber.Ctx) error {
 
 	tokenString, ok := strings.CutPrefix(header, "Bearer ")
 	if !ok || tokenString == "" {
+		tokenString = c.Cookies("access_token")
+	}
+
+	if tokenString == "" {
 		return c.Status(fiber.StatusUnauthorized).SendString("missing auth token")
 	}
 
