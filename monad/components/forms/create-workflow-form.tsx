@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { type SyntheticEvent, useState } from "react";
 
 import { createWorkflow } from "@/lib/api";
 import { CreateWorkflowRequest } from "@/types/workflow";
@@ -37,7 +37,7 @@ export const CreateWorkflowForm = ({ onCreated }: CreateWorkflowFormProps) => {
   const [workflowName, setWorkflowName] = useState("");
   const [steps, setSteps] = useState<StepForm[]>([createEmptyStep()]);
 
-  async function handleCreateWorkflow(event: FormEvent<HTMLFormElement>) {
+  async function handleCreateWorkflow(event: SyntheticEvent<HTMLFormElement>) {
     event.preventDefault();
     setCreateError("");
 

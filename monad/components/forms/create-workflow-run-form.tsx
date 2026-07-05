@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useState } from "react";
+import { type SyntheticEvent, useEffect, useState } from "react";
 
 import { createWorkflowRun } from "@/lib/api";
 import { Workflow } from "@/types/workflow";
@@ -25,7 +25,7 @@ export function CreateWorkflowRunForm({
     setWorkflowID((current) => current || workflows[0]?.id || "");
   }, [workflows]);
 
-  async function handleCreateRun(event: FormEvent<HTMLFormElement>) {
+  async function handleCreateRun(event: SyntheticEvent<HTMLFormElement>) {
     event.preventDefault();
     setFormError("");
     setSuccessMessage("");

@@ -1,4 +1,4 @@
-import { LoginRequest, LoginResponse } from "@/types/login";
+import { LoginRequest, LoginResponse, RegisterResponse } from "@/types/login";
 import { Task } from "@/types/task";
 import { CreateWorkflowRequest, Workflow } from "@/types/workflow";
 import {
@@ -95,5 +95,10 @@ export async function healthCheck(): Promise<boolean> {
 
 export async function login(body: LoginRequest): Promise<LoginResponse> {
   const response = await api.post<LoginResponse>("/auth/login", body);
+  return response.data;
+}
+
+export async function register(body: LoginRequest): Promise<RegisterResponse> {
+  const response = await api.post<RegisterResponse>("/auth/register", body);
   return response.data;
 }

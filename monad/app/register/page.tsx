@@ -1,22 +1,16 @@
 "use client";
-
+import { login, register } from "@/lib/api";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { type SyntheticEvent, useState } from "react";
 
-import { login } from "@/lib/api";
-
-export default function LoginPage() {
+export default function RegisterPage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
 
-  if (cookieStore.get("access_token")) {
-    router.push("/dashboard")
-  }
-  
   async function handleSubmit(event: SyntheticEvent<HTMLFormElement>) {
     event.preventDefault();
     setError("");
@@ -28,13 +22,18 @@ export default function LoginPage() {
 
     try {
       setSubmitting(true);
-      await login({
+      const res = await register({
         email: email.trim(),
+        password,
+      });
+
+      await login({
+        email: res.email,
         password,
       });
       router.push("/dashboard");
     } catch {
-      setError("Could not log in. Check your email and password.");
+      setError("Could not register. Try another email or check your password.");
     } finally {
       setSubmitting(false);
     }
@@ -47,7 +46,7 @@ export default function LoginPage() {
           <Link href="/" className="text-lg font-semibold">
             Monad
           </Link>
-          <h1 className="mt-6 text-2xl font-semibold">Log in</h1>
+          <h1 className="mt-6 text-2xl font-semibold">Register</h1>
         </div>
 
         <form className="space-y-4" onSubmit={handleSubmit}>
@@ -84,16 +83,16 @@ export default function LoginPage() {
             disabled={submitting}
             className="h-10 w-full rounded-md bg-neutral-950 px-4 text-sm font-medium text-white hover:bg-neutral-800 disabled:cursor-not-allowed disabled:opacity-60"
           >
-            {submitting ? "Logging in..." : "Log in"}
+            {submitting ? "Registering..." : "Register"}
           </button>
 
           <p className="text-center text-sm text-neutral-500">
-            Don&apos;t have an account?{" "}
+            Already have an account?{" "}
             <Link
-              href="/register"
+              href="/login"
               className="font-medium text-neutral-950 hover:underline"
             >
-              Register
+              Log in
             </Link>
           </p>
         </form>
