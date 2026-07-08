@@ -1,13 +1,8 @@
 import Link from "next/link";
 
-export const NavBar = () => {
-  const navItems = [
-    { label: "Home", href: "/" },
-    { label: "Workflows", href: "/workflows" },
-    { label: "History", href: "/history" },
-    { label: "Account", href: "/login" },
-  ];
+import { navItems } from "@/constants/navigation";
 
+export const NavBar = () => {
   return (
     <header className="border-b border-neutral-200 bg-white">
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-6">

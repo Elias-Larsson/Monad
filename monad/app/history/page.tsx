@@ -29,6 +29,10 @@ function sortTasks(tasks: Task[]) {
   });
 }
 
+function hasOutput(task: Task) {
+  return Object.keys(task.output).length > 0;
+}
+
 export default function HistoryPage() {
   const [runs, setRuns] = useState<WorkflowRun[]>([]);
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -184,12 +188,40 @@ export default function HistoryPage() {
                                 </p>
 
                                 <div className="mt-3 grid gap-3 lg:grid-cols-2">
-                                  <pre className="overflow-x-auto rounded-md border border-neutral-200 bg-neutral-50 p-3 text-xs text-neutral-700">
-                                    {JSON.stringify(task.payload, null, 2)}
-                                  </pre>
-                                  <pre className="overflow-x-auto rounded-md border border-neutral-200 bg-white p-3 text-xs text-neutral-700">
-                                    {JSON.stringify(task.output, null, 2)}
-                                  </pre>
+                                  <div className="min-w-0 rounded-md border border-sky-200 bg-sky-50">
+                                    <div className="border-b border-sky-200 px-3 py-2">
+                                      <p className="text-xs font-semibold uppercase tracking-wide text-sky-800">
+                                        Input
+                                      </p>
+                                      <p className="mt-1 text-xs text-sky-700">
+                                        Payload sent to the worker.
+                                      </p>
+                                    </div>
+                                    <pre className="max-h-72 overflow-auto p-3 text-xs text-sky-950">
+                                      {JSON.stringify(task.payload, null, 2)}
+                                    </pre>
+                                  </div>
+
+                                  <div className="min-w-0 rounded-md border border-emerald-200 bg-emerald-50">
+                                    <div className="border-b border-emerald-200 px-3 py-2">
+                                      <p className="text-xs font-semibold uppercase tracking-wide text-emerald-800">
+                                        Output
+                                      </p>
+                                      <p className="mt-1 text-xs text-emerald-700">
+                                        Result stored after the task finished.
+                                      </p>
+                                    </div>
+
+                                    {hasOutput(task) ? (
+                                      <pre className="max-h-72 overflow-auto p-3 text-xs text-emerald-950">
+                                        {JSON.stringify(task.output, null, 2)}
+                                      </pre>
+                                    ) : (
+                                      <div className="p-3 text-xs text-emerald-800">
+                                        No output was stored.
+                                      </div>
+                                    )}
+                                  </div>
                                 </div>
                               </div>
 

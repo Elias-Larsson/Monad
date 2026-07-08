@@ -29,6 +29,10 @@ function taskForStep(tasks: Task[], step: WorkflowStep) {
   );
 }
 
+function hasOutput(task: Task | undefined) {
+  return Boolean(task?.output && Object.keys(task.output).length > 0);
+}
+
 async function loadRunState(workflowRunID: string) {
   const [run, allTasks] = await Promise.all([
     getWorkflowRun(workflowRunID),
@@ -264,6 +268,7 @@ export default function WorkflowAutoRunPage() {
                 {steps.map((step) => {
                   const task = taskForStep(tasks, step);
                   const status = task?.status ?? "PENDING";
+                  const input = task?.payload ?? step.payload;
 
                   return (
                     <article
@@ -283,16 +288,43 @@ export default function WorkflowAutoRunPage() {
                         <h2 className="text-base font-semibold">
                           {step.task_type}
                         </h2>
-                        <pre className="mt-3 overflow-x-auto rounded-md border border-neutral-200 bg-neutral-50 p-3 text-xs text-neutral-700">
-                          {JSON.stringify(task?.payload ?? step.payload, null, 2)}
-                        </pre>
 
-                        {task?.output &&
-                        Object.keys(task.output).length > 0 ? (
-                          <pre className="mt-3 overflow-x-auto rounded-md border border-neutral-200 bg-white p-3 text-xs text-neutral-700">
-                            {JSON.stringify(task.output, null, 2)}
-                          </pre>
-                        ) : null}
+                        <div className="mt-4 grid gap-3 lg:grid-cols-2">
+                          <div className="min-w-0 rounded-md border border-sky-200 bg-sky-50">
+                            <div className="border-b border-sky-200 px-3 py-2">
+                              <p className="text-xs font-semibold uppercase tracking-wide text-sky-800">
+                                Input
+                              </p>
+                              <p className="mt-1 text-xs text-sky-700">
+                                Payload sent to the worker.
+                              </p>
+                            </div>
+                            <pre className="max-h-72 overflow-auto p-3 text-xs text-sky-950">
+                              {JSON.stringify(input, null, 2)}
+                            </pre>
+                          </div>
+
+                          <div className="min-w-0 rounded-md border border-emerald-200 bg-emerald-50">
+                            <div className="border-b border-emerald-200 px-3 py-2">
+                              <p className="text-xs font-semibold uppercase tracking-wide text-emerald-800">
+                                Output
+                              </p>
+                              <p className="mt-1 text-xs text-emerald-700">
+                                Result stored after the task finishes.
+                              </p>
+                            </div>
+
+                            {hasOutput(task) ? (
+                              <pre className="max-h-72 overflow-auto p-3 text-xs text-emerald-950">
+                                {JSON.stringify(task?.output, null, 2)}
+                              </pre>
+                            ) : (
+                              <div className="p-3 text-xs text-emerald-800">
+                                No output yet.
+                              </div>
+                            )}
+                          </div>
+                        </div>
                       </div>
 
                       <div className="sm:text-right">

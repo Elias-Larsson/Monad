@@ -2,6 +2,7 @@
 
 import { type SyntheticEvent, useState } from "react";
 
+import { taskPayloadExamples, taskTypes } from "@/constants/tasks";
 import { createWorkflow } from "@/lib/api";
 import { CreateWorkflowRequest } from "@/types/workflow";
 
@@ -14,42 +15,10 @@ type StepForm = {
   payload: string;
 };
 
-const taskTypes = ["print-message", "wait", "http-request", "json-transform"];
-
-const taskPayloadExamples: Record<string, Record<string, unknown>> = {
-  "print-message": {
-    message: "hello from Monad",
-  },
-  wait: {
-    seconds: 3,
-  },
-  "http-request": {
-    method: "GET",
-    url: "https://jsonplaceholder.typicode.com/todos/1",
-    headers: {
-      Accept: "application/json",
-    },
-    body: null,
-  },
-  "json-transform": {
-    input: {
-      user: {
-        name: "Ada Lovelace",
-        email: "ada@example.com",
-      },
-      plan: "pro",
-    },
-    fields: {
-      name: "user.name",
-      email: "user.email",
-      plan: "plan",
-    },
-  },
-};
-
 function payloadForTaskType(taskType: string) {
   return JSON.stringify(
-    taskPayloadExamples[taskType] ?? taskPayloadExamples["print-message"],
+    taskPayloadExamples[taskType as keyof typeof taskPayloadExamples] ??
+      taskPayloadExamples["print-message"],
     null,
     2,
   );
@@ -126,6 +95,11 @@ export const CreateWorkflowForm = ({ onCreated }: CreateWorkflowFormProps) => {
     setSteps((current) => current.filter((_, stepIndex) => stepIndex !== index));
   }
 
+  function addStep() {
+    setCreateError("");
+    setSteps((current) => [...current, createEmptyStep()]);
+  }
+
   return (
     <form
       onSubmit={handleCreateWorkflow}
@@ -153,15 +127,6 @@ export const CreateWorkflowForm = ({ onCreated }: CreateWorkflowFormProps) => {
       <div className="mt-5 space-y-4">
         <div className="flex items-center justify-between gap-4">
           <h3 className="text-sm font-semibold text-neutral-800">Steps</h3>
-          <button
-            type="button"
-            onClick={() =>
-              setSteps((current) => [...current, createEmptyStep()])
-            }
-            className="rounded-md border border-neutral-300 px-3 py-1.5 text-xs font-medium text-neutral-700 hover:bg-white"
-          >
-            Add step
-          </button>
         </div>
 
         {steps.map((step, index) => (
@@ -232,13 +197,23 @@ export const CreateWorkflowForm = ({ onCreated }: CreateWorkflowFormProps) => {
         <p className="mt-3 text-sm text-red-600">{createError}</p>
       ) : null}
 
-      <button
-        type="submit"
-        disabled={creating}
-        className="mt-4 rounded-md bg-neutral-950 px-4 py-2 text-sm font-medium text-white hover:bg-neutral-800 disabled:cursor-not-allowed disabled:opacity-60"
-      >
-        {creating ? "Creating..." : "Create workflow"}
-      </button>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-2 py-4 sm:flex sm:flex-row">
+        <button
+          type="submit"
+          disabled={creating}
+          className="h-10 rounded-md bg-neutral-950 px-4 text-sm font-medium text-white hover:bg-neutral-800 disabled:cursor-not-allowed disabled:opacity-60 sm:w-40"
+        >
+          {creating ? "Creating..." : "Create workflow"}
+        </button>
+        <button
+          type="button"
+          onClick={addStep}
+          disabled={creating}
+          className="h-10 rounded-md border border-neutral-300 px-4 text-sm font-medium text-neutral-700 hover:bg-white disabled:cursor-not-allowed disabled:opacity-60 sm:w-40"
+        >
+          Add step
+        </button>
+      </div>
     </form>
   );
 };
