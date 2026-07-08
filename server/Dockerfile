@@ -12,6 +12,7 @@ RUN CGO_ENABLED=0 GOOS=linux go build -o /usr/local/bin/worker ./cmd/worker
 
 FROM alpine:3.22
 
+RUN apk add --no-cache curl
 RUN adduser -D -g "" monad
 
 COPY --from=builder /usr/local/bin/api /usr/local/bin/api
