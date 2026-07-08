@@ -9,7 +9,7 @@ import {
   homepageTaskTypes,
   liveUpdateFlow,
   productFlow,
-  stack,
+  techStack,
 } from "@/constants/home";
 
 import styles from "./duck.module.css";
@@ -19,8 +19,8 @@ export default function Home() {
     <main className="min-h-screen bg-neutral-50 text-neutral-950">
       <NavBar />
 
-      <section className="mx-auto max-w-6xl px-6 py-10 lg:py-14">
-        <section className="flex min-h-[560px] items-center justify-between gap-10">
+      <section className="bg-white">
+        <div className="mx-auto flex min-h-[560px] max-w-6xl items-center justify-between gap-10 px-6 py-10 lg:py-14">
           <div className="max-w-3xl">
             <Logo />
 
@@ -47,7 +47,7 @@ export default function Home() {
               className={styles.duck}
             />
           </a>
-        </section>
+        </div>
       </section>
 
       <section className="border-y border-neutral-200 bg-neutral-50">
@@ -69,6 +69,27 @@ export default function Home() {
               makes the system architecture, execution flow, and engineering
               decisions visible instead of hiding them behind a simple UI.
             </p>
+
+            <div className="mt-8 flex flex-wrap gap-x-6 gap-y-4">
+              {techStack.map((item) => (
+                <div
+                  key={item.label}
+                  className="flex min-w-0 items-center gap-2 text-neutral-700"
+                >
+                  <svg
+                    viewBox="0 0 24 24"
+                    className="h-5 w-5 shrink-0"
+                    fill={item.color}
+                    aria-hidden="true"
+                  >
+                    <path d={item.icon.path} />
+                  </svg>
+                  <span className="text-sm font-medium">
+                    {item.label}
+                  </span>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </section>
@@ -243,27 +264,7 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="mx-auto max-w-6xl px-6 py-16 lg:py-20">
-        <div className="max-w-2xl">
-          <p className="text-sm font-medium text-neutral-500">Built with</p>
-          <h2 className="mt-3 text-3xl leading-tight text-neutral-950">
-            A backend-focused Go project with a small dashboard.
-          </h2>
-        </div>
-
-        <div className="mt-8 flex flex-wrap gap-3">
-          {stack.map((item) => (
-            <span
-              key={item}
-              className="rounded-md border border-neutral-200 bg-white px-4 py-2 text-sm font-medium text-neutral-700"
-            >
-              {item}
-            </span>
-          ))}
-        </div>
-      </section>
-
-      <footer className="border-t border-neutral-200 bg-white">
+      <footer className="border-t border-neutral-200">
         <div className="mx-auto flex max-w-6xl flex-col gap-6 px-6 py-8 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-4">
             <Image

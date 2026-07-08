@@ -1,3 +1,16 @@
+import {
+  siDocker,
+  siGo,
+  siJsonwebtokens,
+  siNextdotjs,
+  siPostgresql,
+  siRabbitmq,
+  siSocket,
+  siTailwindcss,
+  siTypescript,
+} from "simple-icons";
+import type { SimpleIcon } from "simple-icons";
+
 export const productFlow = [
   {
     step: "01",
@@ -110,16 +123,67 @@ export const homepageTaskTypes = [
   },
 ];
 
-export const stack = [
-  "Go",
-  "Fiber",
-  "PostgreSQL",
-  "RabbitMQ",
-  "Docker Compose",
-  "Next.js",
-  "JWT auth",
-  "Workers",
-];
+export const techStack = [
+  {
+    label: "Go",
+    icon: siGo,
+    color: "#00ADD8",
+  },
+  {
+    label: "Fiber API",
+    icon: siGo,
+    color: "#10B981",
+  },
+  {
+    label: "PostgreSQL",
+    icon: siPostgresql,
+    color: "#4169E1",
+  },
+  {
+    label: "RabbitMQ",
+    icon: siRabbitmq,
+    color: "#FF6600",
+  },
+  {
+    label: "Docker Compose",
+    icon: siDocker,
+    color: "#2496ED",
+  },
+  {
+    label: "Next.js",
+    icon: siNextdotjs,
+    color: "#111111",
+  },
+  {
+    label: "TypeScript",
+    icon: siTypescript,
+    color: "#3178C6",
+  },
+  {
+    label: "Tailwind CSS",
+    icon: siTailwindcss,
+    color: "#06B6D4",
+  },
+  {
+    label: "JWT auth",
+    icon: siJsonwebtokens,
+    color: "#7C3AED",
+  },
+  {
+    label: "WebSockets",
+    icon: siSocket,
+    color: "#C93CD7",
+  },
+  {
+    label: "Go workers",
+    icon: siGo,
+    color: "#E11D48",
+  },
+] satisfies Array<{
+  label: string;
+  icon: SimpleIcon;
+  color: string;
+}>;
 
 export const footerLinks = [
   {
