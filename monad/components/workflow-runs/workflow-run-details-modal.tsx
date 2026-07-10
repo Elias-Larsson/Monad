@@ -1,5 +1,6 @@
 import { EmptyState } from "@/components/empty-state";
 import { StatusBadge } from "@/components/status-badge";
+import { TaskDataPanels } from "@/components/tasks/task-data-panels";
 import { Task } from "@/types/task";
 import { WorkflowRun } from "@/types/workflow-run";
 
@@ -119,9 +120,13 @@ export function WorkflowRunDetailsModal({
                         <p className="mt-1 break-all text-xs text-neutral-500">
                           {task.id}
                         </p>
-                        <pre className="mt-3 overflow-x-auto rounded-md border border-neutral-200 bg-neutral-50 p-3 text-xs text-neutral-700">
-                          {JSON.stringify(task.payload, null, 2)}
-                        </pre>
+                        <div className="mt-3">
+                          <TaskDataPanels
+                            input={task.payload}
+                            output={task.output}
+                            outputEmptyMessage="No output was stored."
+                          />
+                        </div>
                       </div>
 
                       <div>
