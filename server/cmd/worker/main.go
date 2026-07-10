@@ -94,6 +94,24 @@ func handleTask(ctx context.Context, pool *pgxpool.Pool, body []byte) error {
 	}
 
 	if ok {
+		resolvedPayload, err := workflow.ResolveTaskPayload(nextTask.Payload, output)
+		if err != nil {
+			if markErr := workflow.MarkTaskFailed(ctx, pool, nextTask.TaskID, err.Error()); markErr != nil {
+				return markErr
+			}
+			if markErr := workflow.MarkWorkflowRunFailed(ctx, pool, msg.WorkflowRunID); markErr != nil {
+				return markErr
+			}
+
+			log.Printf("task %s input could not be resolved: %v", nextTask.TaskID, err)
+			return nil
+		}
+
+		if err := workflow.UpdateTaskPayload(ctx, pool, nextTask.TaskID, resolvedPayload); err != nil {
+			return err
+		}
+		nextTask.Payload = resolvedPayload
+
 		body, err := json.Marshal(nextTask)
 		if err != nil {
 			return err
