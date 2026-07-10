@@ -2,40 +2,28 @@
 
 import { type SyntheticEvent, useState } from "react";
 
-import { taskPayloadExamples, taskTypes } from "@/constants/tasks";
+import { WorkflowStepEditor } from "@/components/forms/workflow/workflow-step-editor";
+import {
+  createWorkflowStepDraft,
+  removePreviousOutputSources,
+  validateWorkflowStep,
+  workflowStepPayload,
+  type WorkflowStepDraft,
+} from "@/components/forms/workflow/workflow-form-model";
 import { createWorkflow } from "@/lib/api";
-import { CreateWorkflowRequest } from "@/types/workflow";
+import type { CreateWorkflowRequest } from "@/types/workflow";
 
 type CreateWorkflowFormProps = {
   onCreated: () => Promise<void>;
 };
 
-type StepForm = {
-  taskType: string;
-  payload: string;
-};
-
-function payloadForTaskType(taskType: string) {
-  return JSON.stringify(
-    taskPayloadExamples[taskType as keyof typeof taskPayloadExamples] ??
-      taskPayloadExamples["print-message"],
-    null,
-    2,
-  );
-}
-
-function createEmptyStep(): StepForm {
-  return {
-    taskType: "print-message",
-    payload: payloadForTaskType("print-message"),
-  };
-}
-
 export const CreateWorkflowForm = ({ onCreated }: CreateWorkflowFormProps) => {
   const [creating, setCreating] = useState(false);
   const [createError, setCreateError] = useState("");
   const [workflowName, setWorkflowName] = useState("");
-  const [steps, setSteps] = useState<StepForm[]>([createEmptyStep()]);
+  const [steps, setSteps] = useState<WorkflowStepDraft[]>([
+    createWorkflowStepDraft(),
+  ]);
 
   async function handleCreateWorkflow(event: SyntheticEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -52,21 +40,17 @@ export const CreateWorkflowForm = ({ onCreated }: CreateWorkflowFormProps) => {
 
     const parsedSteps: CreateWorkflowRequest["steps"] = [];
     for (const [index, step] of steps.entries()) {
-      if (!step.taskType.trim()) {
-        setCreateError("Each step needs a task type.");
+      const validationError = validateWorkflowStep(step, index);
+      if (validationError) {
+        setCreateError(validationError);
         return;
       }
 
-      try {
-        parsedSteps.push({
-          step_order: index + 1,
-          task_type: step.taskType.trim(),
-          payload: JSON.parse(step.payload),
-        });
-      } catch {
-        setCreateError(`Step ${index + 1} payload must be valid JSON.`);
-        return;
-      }
+      parsedSteps.push({
+        step_order: index + 1,
+        task_type: step.taskType,
+        payload: workflowStepPayload(step),
+      });
     }
 
     try {
@@ -76,7 +60,7 @@ export const CreateWorkflowForm = ({ onCreated }: CreateWorkflowFormProps) => {
         steps: parsedSteps,
       });
       setWorkflowName("");
-      setSteps([createEmptyStep()]);
+      setSteps([createWorkflowStepDraft()]);
       await onCreated();
     } catch {
       setCreateError("Could not create workflow.");
@@ -85,119 +69,92 @@ export const CreateWorkflowForm = ({ onCreated }: CreateWorkflowFormProps) => {
     }
   }
 
-  function updateStep(index: number, nextStep: StepForm) {
+  function updateStep(index: number, nextStep: WorkflowStepDraft) {
     setSteps((current) =>
-      current.map((step, stepIndex) => (stepIndex === index ? nextStep : step)),
+      current.map((step, stepIndex) =>
+        stepIndex === index ? nextStep : step,
+      ),
     );
   }
 
   function removeStep(index: number) {
-    setSteps((current) => current.filter((_, stepIndex) => stepIndex !== index));
+    setSteps((current) => {
+      const nextSteps = current.filter((_, stepIndex) => stepIndex !== index);
+      if (nextSteps[0]) {
+        nextSteps[0] = removePreviousOutputSources(nextSteps[0]);
+      }
+      return nextSteps;
+    });
   }
 
   function addStep() {
     setCreateError("");
-    setSteps((current) => [...current, createEmptyStep()]);
+    setSteps((current) => [
+      ...current,
+      createWorkflowStepDraft("print-message", current.length > 0),
+    ]);
   }
 
   return (
     <form
       onSubmit={handleCreateWorkflow}
-      className="rounded-md border border-neutral-200 bg-neutral-50 p-5"
+      className="rounded-md border border-neutral-200 bg-white p-5"
     >
       <div className="flex flex-col gap-1">
         <h2 className="text-lg font-semibold">Create workflow</h2>
         <p className="text-sm text-neutral-500">
-          Add a workflow blueprint that workflow runs can execute.
+          Build a reusable sequence by configuring each task below.
         </p>
       </div>
 
-      <div className="mt-4">
-        <label className="flex flex-col gap-2">
-          <span className="text-sm font-medium text-neutral-700">Name</span>
-          <input
-            value={workflowName}
-            onChange={(event) => setWorkflowName(event.target.value)}
-            placeholder="Test Workflow"
-            className="h-10 rounded-md border border-neutral-300 bg-white px-3 text-sm outline-none focus:border-neutral-950"
-          />
-        </label>
-      </div>
+      <label className="mt-5 flex flex-col gap-2">
+        <span className="text-sm font-medium text-neutral-700">
+          Workflow name
+        </span>
+        <input
+          value={workflowName}
+          onChange={(event) => setWorkflowName(event.target.value)}
+          disabled={creating}
+          placeholder="Daily API check"
+          className="h-10 rounded-md border border-neutral-300 bg-white px-3 text-sm outline-none focus:border-neutral-950 disabled:bg-neutral-100"
+        />
+      </label>
 
-      <div className="mt-5 space-y-4">
-        <div className="flex items-center justify-between gap-4">
-          <h3 className="text-sm font-semibold text-neutral-800">Steps</h3>
+      <div className="mt-6">
+        <div className="border-b border-neutral-200 pb-3">
+          <h3 className="text-sm font-semibold text-neutral-950">Tasks</h3>
+          <p className="mt-1 text-xs text-neutral-500">
+            Tasks run from top to bottom. Later tasks can use output from the
+            task immediately before them.
+          </p>
         </div>
 
-        {steps.map((step, index) => (
-          <div
-            key={index}
-            className="rounded-md border border-neutral-200 bg-white p-4"
-          >
-            <div className="flex items-center justify-between gap-4">
-              <p className="text-sm font-medium text-neutral-800">
-                Step {index + 1}
-              </p>
-              {steps.length > 1 ? (
-                <button
-                  type="button"
-                  onClick={() => removeStep(index)}
-                  className="text-xs font-medium text-red-600 hover:text-red-700"
-                >
-                  Remove
-                </button>
-              ) : null}
-            </div>
-
-            <label className="mt-3 flex flex-col gap-2">
-              <span className="text-sm font-medium text-neutral-700">
-                Task type
-              </span>
-              <select
-                value={step.taskType}
-                onChange={(event) => {
-                  const taskType = event.target.value;
-                  updateStep(index, {
-                    ...step,
-                    taskType,
-                    payload: payloadForTaskType(taskType),
-                  });
-                }}
-                className="h-10 rounded-md border border-neutral-300 bg-white px-3 text-sm outline-none focus:border-neutral-950"
-              >
-                {taskTypes.map((type) => (
-                  <option key={type} value={type}>
-                    {type}
-                  </option>
-                ))}
-              </select>
-            </label>
-
-            <label className="mt-3 flex flex-col gap-2">
-              <span className="text-sm font-medium text-neutral-700">
-                Payload JSON
-              </span>
-              <textarea
-                value={step.payload}
-                onChange={(event) =>
-                  updateStep(index, {
-                    ...step,
-                    payload: event.target.value,
-                  })
-                }
-                rows={8}
-                className="rounded-md border border-neutral-300 bg-white px-3 py-2 font-mono text-sm outline-none focus:border-neutral-950"
-              />
-            </label>
-          </div>
-        ))}
+        <div className="divide-y divide-neutral-200">
+          {steps.map((step, index) => (
+            <WorkflowStepEditor
+              key={index}
+              step={step}
+              index={index}
+              previousStep={steps[index - 1]}
+              canRemove={steps.length > 1}
+              disabled={creating}
+              onChange={(nextStep) => updateStep(index, nextStep)}
+              onRemove={() => removeStep(index)}
+            />
+          ))}
+        </div>
       </div>
 
       {createError ? (
-        <p className="mt-3 text-sm text-red-600">{createError}</p>
+        <p
+          className="mt-3 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700"
+          role="alert"
+        >
+          {createError}
+        </p>
       ) : null}
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-2 py-4 sm:flex sm:flex-row">
+      <div className="grid grid-cols-1 gap-2 pt-5 sm:flex sm:flex-row">
         <button
           type="submit"
           disabled={creating}
@@ -209,9 +166,9 @@ export const CreateWorkflowForm = ({ onCreated }: CreateWorkflowFormProps) => {
           type="button"
           onClick={addStep}
           disabled={creating}
-          className="h-10 rounded-md border border-neutral-300 px-4 text-sm font-medium text-neutral-700 hover:bg-white disabled:cursor-not-allowed disabled:opacity-60 sm:w-40"
+          className="h-10 rounded-md border border-neutral-300 px-4 text-sm font-medium text-neutral-700 hover:bg-neutral-50 disabled:cursor-not-allowed disabled:opacity-60 sm:w-40"
         >
-          Add step
+          Add task
         </button>
       </div>
     </form>

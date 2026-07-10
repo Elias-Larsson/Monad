@@ -7,6 +7,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { EmptyState } from "@/components/empty-state";
 import { NavBar } from "@/components/navigation/navbar";
 import { StatusBadge } from "@/components/status-badge";
+import { TaskDataPanels } from "@/components/tasks/task-data-panels";
 import { createWorkflowRun, getTasks, getWorkflow, getWorkflowRun } from "@/lib/api";
 import { workflowRunWebSocketURL } from "@/lib/realtime";
 import type { Task } from "@/types/task";
@@ -27,10 +28,6 @@ function taskForStep(tasks: Task[], step: WorkflowStep) {
     tasks.find((task) => task.workflow_step_id === step.id) ??
     tasks.find((task) => task.step_order === step.step_order)
   );
-}
-
-function hasOutput(task: Task | undefined) {
-  return Boolean(task?.output && Object.keys(task.output).length > 0);
 }
 
 async function loadRunState(workflowRunID: string) {
@@ -289,41 +286,12 @@ export default function WorkflowAutoRunPage() {
                           {step.task_type}
                         </h2>
 
-                        <div className="mt-4 grid gap-3 lg:grid-cols-2">
-                          <div className="min-w-0 rounded-md border border-sky-200 bg-sky-50">
-                            <div className="border-b border-sky-200 px-3 py-2">
-                              <p className="text-xs font-semibold uppercase tracking-wide text-sky-800">
-                                Input
-                              </p>
-                              <p className="mt-1 text-xs text-sky-700">
-                                Payload sent to the worker.
-                              </p>
-                            </div>
-                            <pre className="max-h-72 overflow-auto p-3 text-xs text-sky-950">
-                              {JSON.stringify(input, null, 2)}
-                            </pre>
-                          </div>
-
-                          <div className="min-w-0 rounded-md border border-emerald-200 bg-emerald-50">
-                            <div className="border-b border-emerald-200 px-3 py-2">
-                              <p className="text-xs font-semibold uppercase tracking-wide text-emerald-800">
-                                Output
-                              </p>
-                              <p className="mt-1 text-xs text-emerald-700">
-                                Result stored after the task finishes.
-                              </p>
-                            </div>
-
-                            {hasOutput(task) ? (
-                              <pre className="max-h-72 overflow-auto p-3 text-xs text-emerald-950">
-                                {JSON.stringify(task?.output, null, 2)}
-                              </pre>
-                            ) : (
-                              <div className="p-3 text-xs text-emerald-800">
-                                No output yet.
-                              </div>
-                            )}
-                          </div>
+                        <div className="mt-4">
+                          <TaskDataPanels
+                            input={input}
+                            output={task?.output}
+                            outputEmptyMessage="No output yet."
+                          />
                         </div>
                       </div>
 
