@@ -88,6 +88,32 @@ func MarkTaskFailed(ctx context.Context, pool *pgxpool.Pool, taskID string, erro
 	return nil
 }
 
+func UpdateTaskPayload(ctx context.Context, pool *pgxpool.Pool, taskID string, payload json.RawMessage) error {
+	dbPayload := "{}"
+	if len(payload) > 0 {
+		dbPayload = string(payload)
+	}
+
+	var workflowRunID string
+	err := pool.QueryRow(
+		ctx,
+		`
+		UPDATE tasks
+		SET payload = $2::jsonb
+		WHERE id = $1
+		RETURNING workflow_run_id
+		`,
+		taskID,
+		dbPayload,
+	).Scan(&workflowRunID)
+	if err != nil {
+		return err
+	}
+
+	notifyWorkflowRunUpdated(ctx, pool, workflowRunID)
+	return nil
+}
+
 func GetNextPendingTask(ctx context.Context, pool *pgxpool.Pool, workflowRunID string, currentStepOrder int) (models.TaskMessage, bool, error) {
 	var msg models.TaskMessage
 

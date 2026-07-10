@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"strings"
 
+	workflowstore "monad/internal/workflow"
 	"monad/models"
 
 	"github.com/gofiber/fiber/v3"
@@ -172,7 +173,10 @@ func (h *Handler) WorkflowCreate(c fiber.Ctx) error {
 	}
 
 	usedStepOrders := map[int]bool{}
+	firstStepOrder := 0
+	firstStepUsesPreviousOutput := false
 	for index, requestStep := range request.Steps {
+		requestStep.TaskType = strings.TrimSpace(requestStep.TaskType)
 		if requestStep.TaskType == "" {
 			return c.Status(fiber.StatusBadRequest).SendString("step task_type is required")
 		}
@@ -189,6 +193,15 @@ func (h *Handler) WorkflowCreate(c fiber.Ctx) error {
 		}
 		usedStepOrders[stepOrder] = true
 
+		usesPreviousOutput, err := workflowstore.HasPreviousOutputReference(requestStep.Payload)
+		if err != nil {
+			return c.Status(fiber.StatusBadRequest).SendString(err.Error())
+		}
+		if firstStepOrder == 0 || stepOrder < firstStepOrder {
+			firstStepOrder = stepOrder
+			firstStepUsesPreviousOutput = usesPreviousOutput
+		}
+
 		step := models.WorkflowStepResponse{
 			ID:         uuid.New().String(),
 			WorkflowID: workflowID,
@@ -202,7 +215,7 @@ func (h *Handler) WorkflowCreate(c fiber.Ctx) error {
 			dbPayload = string(requestStep.Payload)
 		}
 
-		err := tx.QueryRow(
+		err = tx.QueryRow(
 			ctx,
 			`
 			INSERT INTO workflow_steps (
@@ -232,6 +245,10 @@ func (h *Handler) WorkflowCreate(c fiber.Ctx) error {
 		}
 
 		response.Steps = append(response.Steps, step)
+	}
+	if firstStepUsesPreviousOutput {
+		return c.Status(fiber.StatusBadRequest).
+			SendString("the first workflow step cannot reference previous task output")
 	}
 
 	if err := tx.Commit(ctx); err != nil {
